@@ -36,7 +36,8 @@ async function scanTasks(): Promise<TaskInfo[]> {
     try {
       const taskName = path.basename(path.dirname(configFile));
       const content = await fs.readFile(configFile, 'utf-8');
-      const loadedConfig = yaml.load(content);
+      // Type assertion with validation
+      const loadedConfig: unknown = yaml.load(content);
       if (!loadedConfig || typeof loadedConfig !== 'object') {
         throw new Error('Invalid config format');
       }

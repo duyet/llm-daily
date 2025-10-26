@@ -9,6 +9,7 @@ let currentModalTask = null;
 let currentModalResult = null;
 let autoRefreshInterval = null;
 let lastUpdated = null;
+let activeWorkflowPolling = new Map(); // Map of taskName -> polling interval
 
 // Tab Management
 function initTabs() {
@@ -86,12 +87,14 @@ function renderResultsTab(analytics) {
     const resultPreview = task.latestResult?.preview || 'Result data will be available after the next run';
 
     return `
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 transition-all hover:shadow-lg hover:-translate-y-1 hover:border-purple-lighter shadow-sm">
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 transition-all hover:shadow-lg hover:-translate-y-1 hover:border-purple-lighter shadow-sm" data-task="${task.name}">
         <div class="flex justify-between items-start mb-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">${formatTaskName(task.name)}</h3>
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusClass}">
-            ${statusIcon} ${(task.successRate * 100).toFixed(0)}% Success
-          </span>
+          <div class="status-badge">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusClass}">
+              ${statusIcon} ${(task.successRate * 100).toFixed(0)}% Success
+            </span>
+          </div>
         </div>
 
         <div class="flex gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
@@ -105,9 +108,16 @@ function renderResultsTab(analytics) {
           <p class="text-sm leading-relaxed text-gray-900 dark:text-gray-100 max-h-20 overflow-hidden relative whitespace-pre-wrap result-preview-gradient">${escapeHtml(resultPreview)}</p>
         </div>
 
-        <button class="w-full px-4 py-2.5 text-sm font-medium text-purple border border-purple rounded-lg transition-all hover:bg-purple hover:text-white" onclick="viewFullResult('${task.name}')">
-          View Full Result →
-        </button>
+        <div class="workflow-link mb-3 text-center"></div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <button class="px-4 py-2.5 text-sm font-medium text-purple border border-purple rounded-lg transition-all hover:bg-purple hover:text-white" onclick="viewFullResult('${task.name}')">
+            📄 View Result
+          </button>
+          <button class="run-now-btn px-4 py-2.5 text-sm font-medium text-white bg-purple rounded-lg transition-all hover:bg-purple-light" onclick="triggerJob('${task.name}')">
+            ▶️ Run Now
+          </button>
+        </div>
       </div>
     `;
   }).join('');
@@ -438,4 +448,227 @@ document.addEventListener('DOMContentLoaded', () => {
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
   stopAutoRefresh();
+  // Stop all workflow polling
+  for (const [taskName, interval] of activeWorkflowPolling) {
+    clearInterval(interval);
+  }
+  activeWorkflowPolling.clear();
 });
+
+// ===========================
+// GitHub API Integration (F002, F003)
+// ===========================
+
+// Settings Modal Functions
+function openSettingsModal() {
+  const modal = document.getElementById('settings-modal');
+  modal.classList.remove('hidden');
+
+  // Load existing token (masked)
+  const token = getGitHubToken();
+  const input = document.getElementById('github-token-input');
+  if (token) {
+    input.value = token;
+  }
+}
+
+function closeSettingsModal() {
+  const modal = document.getElementById('settings-modal');
+  modal.classList.add('hidden');
+}
+
+function toggleTokenVisibility() {
+  const input = document.getElementById('github-token-input');
+  const icon = document.getElementById('token-toggle-icon');
+
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    icon.textContent = '👁️';
+  }
+}
+
+async function validateAndSaveToken() {
+  const input = document.getElementById('github-token-input');
+  const token = input.value.trim();
+
+  if (!token) {
+    showToast('Please enter a GitHub token', 'warning');
+    return;
+  }
+
+  // Show loading
+  showToast('Validating token...', 'info', 2000);
+
+  // Save token first
+  setGitHubToken(token);
+
+  // Validate token
+  try {
+    const isValid = await validateToken();
+    if (isValid) {
+      showToast('Token validated and saved successfully!', 'success');
+      closeSettingsModal();
+    } else {
+      showToast('Token validation failed. Please check your token.', 'error');
+      clearGitHubToken();
+    }
+  } catch (error) {
+    showToast('Token validation error: ' + error.message, 'error');
+    clearGitHubToken();
+  }
+}
+
+function clearToken() {
+  if (confirm('Are you sure you want to clear the GitHub token? You will need to re-enter it to trigger jobs.')) {
+    clearGitHubToken();
+    document.getElementById('github-token-input').value = '';
+    showToast('Token cleared', 'info');
+  }
+}
+
+// Manual Job Trigger (F002)
+async function triggerJob(taskName) {
+  // Check if token is configured
+  if (!getGitHubToken()) {
+    showToast('GitHub token not configured. Please set it in Settings.', 'warning');
+    openSettingsModal();
+    return;
+  }
+
+  // Confirm trigger
+  const confirmed = confirm(`Trigger job "${formatTaskName(taskName)}"?\n\nThis will start a new workflow run on GitHub Actions.`);
+  if (!confirmed) return;
+
+  try {
+    // Show loading state
+    showToast(`Triggering ${formatTaskName(taskName)}...`, 'info', 2000);
+
+    // Update button state
+    const button = document.querySelector(`[data-task="${taskName}"] .run-now-btn`);
+    if (button) {
+      button.disabled = true;
+      button.innerHTML = '⏳ Triggering...';
+    }
+
+    // Trigger workflow
+    await triggerWorkflow(taskName);
+
+    // Success
+    showToast(`Job "${formatTaskName(taskName)}" triggered successfully!`, 'success');
+
+    // Start polling for status (F003)
+    startWorkflowPolling(taskName);
+
+    // Update button state
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = '▶️ Run Now';
+    }
+
+    // Refresh analytics after a short delay
+    setTimeout(() => {
+      loadDashboard();
+    }, 3000);
+
+  } catch (error) {
+    console.error('Failed to trigger job:', error);
+    showToast(`Failed to trigger job: ${error.message}`, 'error');
+
+    // Reset button state
+    const button = document.querySelector(`[data-task="${taskName}"] .run-now-btn`);
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = '▶️ Run Now';
+    }
+  }
+}
+
+// Real-Time Status Polling (F003)
+function startWorkflowPolling(taskName) {
+  // Stop existing polling if any
+  if (activeWorkflowPolling.has(taskName)) {
+    clearInterval(activeWorkflowPolling.get(taskName));
+  }
+
+  console.log(`[Polling] Started for ${taskName}`);
+
+  // Poll immediately
+  pollWorkflowStatus(taskName);
+
+  // Poll every 5 seconds
+  const interval = setInterval(() => {
+    pollWorkflowStatus(taskName);
+  }, 5000);
+
+  activeWorkflowPolling.set(taskName, interval);
+}
+
+function stopWorkflowPolling(taskName) {
+  if (activeWorkflowPolling.has(taskName)) {
+    clearInterval(activeWorkflowPolling.get(taskName));
+    activeWorkflowPolling.delete(taskName);
+    console.log(`[Polling] Stopped for ${taskName}`);
+  }
+}
+
+async function pollWorkflowStatus(taskName) {
+  try {
+    const runs = await getWorkflowRuns(taskName, 1);
+    if (runs.length === 0) return;
+
+    const latestRun = runs[0];
+    const status = latestRun.status; // queued, in_progress, completed
+    const conclusion = latestRun.conclusion; // success, failure, cancelled, etc.
+
+    console.log(`[Polling] ${taskName}: ${status} (${conclusion || 'pending'})`);
+
+    // Update UI with status
+    updateTaskStatus(taskName, status, conclusion, latestRun);
+
+    // Stop polling if completed
+    if (status === 'completed') {
+      stopWorkflowPolling(taskName);
+      // Refresh analytics to show new results
+      loadDashboard();
+    }
+
+  } catch (error) {
+    console.error(`[Polling] Error for ${taskName}:`, error);
+    // Continue polling despite errors
+  }
+}
+
+function updateTaskStatus(taskName, status, conclusion, run) {
+  // Find task card or config row
+  const card = document.querySelector(`[data-task="${taskName}"]`);
+  if (!card) return;
+
+  // Update status badge
+  let statusHTML = '';
+  if (status === 'queued') {
+    statusHTML = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">⏳ Queued</span>';
+  } else if (status === 'in_progress') {
+    statusHTML = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">🔄 Running</span>';
+  } else if (status === 'completed' && conclusion === 'success') {
+    statusHTML = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">✅ Success</span>';
+  } else if (status === 'completed' && conclusion === 'failure') {
+    statusHTML = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">❌ Failed</span>';
+  }
+
+  const statusBadge = card.querySelector('.status-badge');
+  if (statusBadge && statusHTML) {
+    statusBadge.innerHTML = statusHTML;
+  }
+
+  // Add link to workflow run
+  if (run && run.html_url) {
+    const linkHTML = `<a href="${run.html_url}" target="_blank" class="text-xs text-purple hover:underline">View on GitHub →</a>`;
+    const linkContainer = card.querySelector('.workflow-link');
+    if (linkContainer) {
+      linkContainer.innerHTML = linkHTML;
+    }
+  }
+}

@@ -86,8 +86,11 @@
           <h1 class="text-2xl font-bold text-purple tracking-tight leading-tight">🤖 LLM Daily</h1>
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Automated task results dashboard</p>
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3">
           <span id="last-updated" class="text-xs text-gray-500 dark:text-gray-400"></span>
+          <button onclick="openSettingsModal()" class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg transition-all hover:bg-gray-100 dark:hover:bg-gray-700" title="Settings">
+            ⚙️
+          </button>
           <button onclick="manualRefresh()" class="px-3 py-2 text-sm font-medium text-purple border border-purple rounded-lg transition-all hover:bg-purple hover:text-white" title="Refresh dashboard data">
             🔄 Refresh
           </button>
@@ -154,6 +157,74 @@
     </p>
   </footer>
 
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target === this) closeSettingsModal()">
+    <div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full overflow-hidden shadow-2xl animate-fade-in">
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700 bg-beige dark:bg-gray-700">
+        <div>
+          <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">⚙️ Settings</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Configure GitHub API integration</p>
+        </div>
+        <button onclick="closeSettingsModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600" aria-label="Close modal">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="p-6">
+        <div class="mb-6">
+          <label for="github-token-input" class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            GitHub Personal Access Token (PAT)
+          </label>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            Required for triggering jobs and monitoring workflow status.
+            <a href="https://github.com/settings/tokens/new?description=LLM Daily Dashboard&scopes=repo,workflow" target="_blank" class="text-purple hover:underline">
+              Create a token here →
+            </a>
+          </p>
+          <div class="relative">
+            <input
+              type="password"
+              id="github-token-input"
+              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              autocomplete="off"
+            />
+            <button
+              onclick="toggleTokenVisibility()"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              aria-label="Toggle token visibility"
+            >
+              <span id="token-toggle-icon">👁️</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+          <h4 class="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">⚠️ Security Warning</h4>
+          <ul class="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+            <li>• Token is stored in browser localStorage (client-side only)</li>
+            <li>• Use a token with minimal permissions (repo, workflow scopes only)</li>
+            <li>• Never share your token or commit it to code</li>
+            <li>• Revoke token immediately if compromised</li>
+          </ul>
+        </div>
+
+        <div class="flex gap-3">
+          <button onclick="validateAndSaveToken()" class="flex-1 px-4 py-3 text-sm font-medium text-white bg-purple rounded-lg transition-all hover:bg-purple-light">
+            💾 Save & Validate Token
+          </button>
+          <button onclick="clearToken()" class="px-4 py-3 text-sm font-medium text-red-600 border border-red-600 rounded-lg transition-all hover:bg-red-50 dark:hover:bg-red-900/20">
+            🗑️ Clear Token
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Result View Modal -->
   <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target === this) closeResultModal()">
     <div class="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl animate-fade-in">
@@ -198,6 +269,7 @@
   <script src="assets/js/theme.js"></script>
   <script src="assets/js/toast.js"></script>
   <script src="assets/js/result-fetcher.js"></script>
+  <script src="assets/js/github-api.js"></script>
   <script src="assets/js/dashboard.js"></script>
 </body>
 </html>
