@@ -1,0 +1,27 @@
+# Pre-commit hook for llm-daily
+# Auto-generates GitHub Actions workflows when task configs change
+
+echo "Checking for task configuration changes..."
+
+# Check if any config.yaml files were modified
+CHANGED_CONFIGS=$(git diff --cached --name-only --diff-filter=ACM | grep -E 'tasks/.*/config\.yaml$' || true)
+
+if [ -n "$CHANGED_CONFIGS" ]; then
+  echo "Task configurations changed. Regenerating workflows..."
+
+  # Regenerate workflows
+  npm run generate --silent
+
+  # Stage generated workflows
+  git add .github/workflows/task-*.yml
+
+  echo "✓ Workflows regenerated and staged"
+else
+  echo "No task configuration changes detected"
+fi
+
+# Run linting
+echo "Running linter..."
+npm run lint --silent
+
+echo "✓ Pre-commit checks passed"
