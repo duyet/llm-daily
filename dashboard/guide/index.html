@@ -19,7 +19,7 @@
             <a href="https://github.com/yourusername/llm-daily" target="_blank" class="text-gray-600 dark:text-gray-300 hover:text-blue-600">GitHub</a>
           </div>
         </div>
-        <button id="theme-toggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
+        <button onclick="toggleDarkMode()" id="theme-toggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600" title="Toggle dark mode" aria-label="Toggle dark mode">
           <span class="dark:hidden">🌙</span>
           <span class="hidden dark:inline">☀️</span>
         </button>
@@ -106,13 +106,21 @@
         <section>
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Documentation</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <a href="../README.md" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400">
-              <h4 class="font-semibold text-gray-900 dark:text-white mb-2">📚 README</h4>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Complete project documentation</p>
+            <a href="./docs.html" class="block p-4 border-2 border-blue-500 dark:border-blue-400 rounded-lg hover:shadow-lg transition-all bg-blue-50 dark:bg-blue-900/20">
+              <h4 class="font-semibold text-gray-900 dark:text-white mb-2">📖 Full Documentation</h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Complete interactive documentation with search</p>
             </a>
-            <a href="https://github.com/yourusername/llm-daily/tree/main/tasks/README.md" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400">
-              <h4 class="font-semibold text-gray-900 dark:text-white mb-2">📝 Task Guide</h4>
-              <p class="text-sm text-gray-600 dark:text-gray-400">How to create tasks</p>
+            <a href="./docs.html#quick-start" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
+              <h4 class="font-semibold text-gray-900 dark:text-white mb-2">🚀 Quick Start</h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Get started in 5 minutes</p>
+            </a>
+            <a href="./docs.html#architecture" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
+              <h4 class="font-semibold text-gray-900 dark:text-white mb-2">🏗️ Architecture</h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400">System design and components</p>
+            </a>
+            <a href="./docs.html#troubleshooting" class="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
+              <h4 class="font-semibold text-gray-900 dark:text-white mb-2">🔧 Troubleshooting</h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Common issues and solutions</p>
             </a>
           </div>
         </section>
