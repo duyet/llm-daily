@@ -2,7 +2,7 @@
 schedule: "0 8 * * *"  # Daily at 8 AM UTC (3 PM Vietnam time)
 
 providers:
-  - id: openai:gpt-4o-mini
+  - id: openrouter:minimax/minimax-m2:free
     config:
       temperature: 0.7
       max_tokens: 2000
@@ -23,7 +23,7 @@ memory:
 
 outputs:
   - type: commit
-    path: docs/data/tasks/ai-news-vietnam.json
+    path: dashboard/data/tasks/ai-news-vietnam.json
     message: "chore(ai-news): update AI news summary [skip ci]"
 
   - type: file

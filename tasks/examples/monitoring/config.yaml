@@ -27,7 +27,7 @@ memory:
 outputs:
   # Log to repository
   - type: commit
-    path: docs/data/tasks/{{taskName}}.json
+    path: dashboard/data/tasks/{{taskName}}.json
 
   # Send webhook alert (configure your webhook URL)
   - type: webhook

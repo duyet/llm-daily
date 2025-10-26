@@ -12,8 +12,8 @@ import {
 } from '../types/analytics.types.js';
 import { calculateCost } from '../utils/cost-calculator.js';
 
-const ANALYTICS_PATH = 'docs/data/analytics.json';
-const HISTORY_DIR = 'docs/data/history';
+const ANALYTICS_PATH = 'dashboard/data/analytics.json';
+const HISTORY_DIR = 'dashboard/data/history';
 
 /**
  * Analytics manager singleton

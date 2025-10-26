@@ -2,7 +2,7 @@
 
 ## Project Status: ✅ PRODUCTION READY
 
-**Final Delivery**: All phases complete with 218 passing tests and production-ready codebase.
+**Final Delivery**: All phases complete with 221 passing tests and production-ready codebase.
 
 ---
 
@@ -18,7 +18,7 @@
 | **Phase 5** | ✅ Complete | 23/23 | N/A | GitHub Pages dashboard |
 | **Phase 6** | ✅ Complete | 11/11 | 145 passing | Analytics & cost tracking |
 | **Phase 7** | ✅ Complete | 17/17 | N/A | Testing, examples, documentation |
-| **TOTAL** | ✅ **100%** | **124/124** | **218 passing** | **Production Ready** |
+| **TOTAL** | ✅ **100%** | **124/124** | **221 passing** | **Production Ready** |
 
 ---
 
@@ -41,11 +41,11 @@
   - Records every task execution
   - Calculates costs, tokens, success rates
   - Daily/weekly/monthly aggregation
-  - Historical data storage in `docs/data/history/`
+  - Historical data storage in `dashboard/data/history/`
 
 #### Output Integrations
 - `/Users/duet/project/llm-daily/src/core/outputs/commit.ts` - Auto-commit output
-  - Writes to `docs/data/tasks/*.json`
+  - Writes to `dashboard/data/tasks/*.json`
   - Updates memory.md files
   - Git add and commit with `[skip ci]`
 
@@ -65,8 +65,8 @@
 - `/Users/duet/project/llm-daily/src/utils/cost-calculator.test.ts` - 20 test cases
 
 #### Data Files
-- `/Users/duet/project/llm-daily/docs/data/analytics.json` - Sample analytics data
-- `/Users/duet/project/llm-daily/docs/data/history/` - Monthly historical data directory
+- `/Users/duet/project/llm-daily/dashboard/data/analytics.json` - Sample analytics data
+- `/Users/duet/project/llm-daily/dashboard/data/history/` - Monthly historical data directory
 
 ### Test Results
 - **51 new tests** added for Phase 6
@@ -82,7 +82,7 @@
 ### Files Created (7 essential files)
 
 #### Dashboard
-- `/Users/duet/project/llm-daily/docs/index.html` - Main dashboard page
+- `/Users/duet/project/llm-daily/dashboard/index.html` - Main dashboard page
   - Overview cards (runs, tokens, cost, success rate)
   - Task cards with per-task metrics
   - Interactive charts (Chart.js)
@@ -90,17 +90,17 @@
   - Mobile responsive
 
 #### Shared Assets
-- `/Users/duet/project/llm-daily/docs/assets/css/main.css` - Tailwind CSS styles
+- `/Users/duet/project/llm-daily/dashboard/assets/css/main.css` - Tailwind CSS styles
   - Custom utility classes
   - Dark mode variables
   - Responsive design
   - Loading states
 
-- `/Users/duet/project/llm-daily/docs/assets/js/theme.js` - Dark mode toggle
+- `/Users/duet/project/llm-daily/dashboard/assets/js/theme.js` - Dark mode toggle
   - localStorage persistence
   - Automatic application on load
 
-- `/Users/duet/project/llm-daily/docs/assets/js/dashboard.js` - Dashboard logic
+- `/Users/duet/project/llm-daily/dashboard/assets/js/dashboard.js` - Dashboard logic
   - Loads analytics.json
   - Renders overview cards
   - Renders task cards
@@ -108,7 +108,7 @@
   - Error handling
 
 #### Documentation
-- `/Users/duet/project/llm-daily/docs/guide/index.html` - Guide homepage
+- `/Users/duet/project/llm-daily/dashboard/guide/index.html` - Guide homepage
   - Quick start steps
   - Feature list
   - Documentation links
@@ -194,7 +194,7 @@
 
 ## 🧪 Test Coverage
 
-### Total Tests: 218 passing (1 pre-existing failure)
+### Total Tests: 221 passing
 
 **Coverage by Module**:
 - Core providers: 33 tests ✅
@@ -244,7 +244,7 @@
 
 ### Quality Metrics
 - **Test Coverage**: >80% ✅
-- **Tests Passing**: 218/219 (99.5%) ✅
+- **Tests Passing**: 221/221 (100%) ✅
 - **Build Status**: Success ✅
 - **Type Safety**: Full TypeScript strict mode ✅
 - **Code Quality**: ESLint + Prettier ✅
@@ -283,7 +283,7 @@
 
 ### For Developers
 1. **Clone and install**: `npm install`
-2. **Run tests**: `npm test` (218 passing)
+2. **Run tests**: `npm test` (221 passing)
 3. **Build**: `npm run build` (compiles successfully)
 4. **Lint**: `npm run lint` (clean)
 5. **Type-check**: `npm run type-check` (no errors)
@@ -313,7 +313,7 @@ All phases completed successfully:
 - ✅ Phase 7: 17 tasks (Polish & Examples)
 
 **Total**: 124/124 tasks (100%)
-**Tests**: 218 passing
+**Tests**: 221 passing
 **Ready for**: v0.1.0 release
 
 ---

@@ -31,7 +31,7 @@ memory:
 
 outputs:
   - type: commit
-    path: docs/data/tasks/{{taskName}}.json
+    path: dashboard/data/tasks/{{taskName}}.json
 
   - type: file
     path: results/markets/{{year}}/{{month}}/{{date}}.md

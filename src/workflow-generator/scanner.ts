@@ -193,16 +193,25 @@ function extractSecrets(config: any): WorkflowSecret[] {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (typeof provider.id === 'string') {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
-        const [providerId] = provider.id.split(':');
+        const providerId = provider.id;
+
+        // Skip free models - they don't require API keys
+        // Free models are identified by ":free" suffix (e.g., "openrouter:minimax/minimax-m2:free")
+        if (providerId.includes(':free')) {
+          continue;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+        const [providerName] = providerId.split(':');
 
         // Map provider to required secret
         let secretKey: string | null = null;
         let envName: string | null = null;
 
-        if (providerId === 'openai') {
+        if (providerName === 'openai') {
           secretKey = 'OPENAI_API_KEY';
           envName = 'OPENAI_API_KEY';
-        } else if (providerId === 'openrouter') {
+        } else if (providerName === 'openrouter') {
           secretKey = 'OPENROUTER_API_KEY';
           envName = 'OPENROUTER_API_KEY';
         }
@@ -211,7 +220,7 @@ function extractSecrets(config: any): WorkflowSecret[] {
           secrets.push({
             name: envName!,
             secretKey,
-            description: `API key for ${providerId}`,
+            description: `API key for ${providerName}`,
           });
           seenSecrets.add(secretKey);
         }

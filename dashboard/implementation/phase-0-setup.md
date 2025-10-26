@@ -74,10 +74,10 @@ Set up complete project infrastructure including:
   - `tasks/examples/` placeholder
   - **Acceptance**: Tasks directory structure ready
 
-- [ ] **P0.8** - Create docs directory - `docs/`
-  - `docs/guide/` for documentation site
-  - `docs/data/` for analytics JSON
-  - `docs/assets/css/` `docs/assets/js/`
+- [ ] **P0.8** - Create docs directory - `dashboard/`
+  - `dashboard/guide/` for documentation site
+  - `dashboard/data/` for analytics JSON
+  - `dashboard/assets/css/` `dashboard/assets/js/`
   - **Acceptance**: Docs structure ready for GitHub Pages
 
 - [ ] **P0.9** - Create GitHub directories - `.github/`
@@ -179,7 +179,7 @@ llm-daily/
 │   ├── .gitkeep                      # P0.7
 │   └── examples/
 │       └── .gitkeep                  # P0.7
-└── docs/
+└── dashboard/
     ├── guide/
     │   └── .gitkeep                  # P0.8
     ├── data/

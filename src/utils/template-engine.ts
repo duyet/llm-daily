@@ -72,6 +72,11 @@ function processIfBlocks(template: string, data: TemplateData): string {
     (_match: string, conditionName: string, blockContent: string): string => {
       const condition = data[conditionName as keyof TemplateData];
 
+      // Treat empty arrays as falsy for template rendering
+      if (Array.isArray(condition) && condition.length === 0) {
+        return '';
+      }
+
       // Simple truthy check
       if (condition) {
         return blockContent;

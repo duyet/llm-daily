@@ -179,7 +179,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "actions@github.com"
-          git add docs/data/ tasks/*/memory.md
+          git add dashboard/data/ tasks/*/memory.md
           git diff --quiet && git diff --staged --quiet || {
             git commit -m "chore({{taskName}}): update results [skip ci]"
             git push

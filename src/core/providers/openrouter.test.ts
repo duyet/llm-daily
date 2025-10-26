@@ -35,6 +35,28 @@ describe('OpenRouterProvider', () => {
       expect(provider.getModel()).toBe('openai/gpt-4-turbo');
     });
 
+    it('should create provider with free model', () => {
+      const config: ProviderConfig = {
+        id: 'openrouter:minimax/minimax-m2:free',
+      };
+
+      provider = new OpenRouterProvider(config);
+
+      expect(provider.getProviderName()).toBe('openrouter');
+      expect(provider.getModel()).toBe('minimax/minimax-m2:free');
+    });
+
+    it('should create provider with free vision model', () => {
+      const config: ProviderConfig = {
+        id: 'openrouter:openrouter/andromeda-alpha',
+      };
+
+      provider = new OpenRouterProvider(config);
+
+      expect(provider.getProviderName()).toBe('openrouter');
+      expect(provider.getModel()).toBe('openrouter/andromeda-alpha');
+    });
+
     it('should use API key from config', () => {
       const config: ProviderConfig = {
         id: 'openrouter:openai/gpt-4-turbo',

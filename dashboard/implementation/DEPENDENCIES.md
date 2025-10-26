@@ -125,7 +125,7 @@ src/
 ### Frontend Files (Parallel Track)
 
 ```
-docs/assets/
+dashboard/assets/
 ├── css/
 │   └── main.css             (0 dependencies)
 └── js/
@@ -134,7 +134,7 @@ docs/assets/
     ├── charts.js            (→ Chart.js, api)
     └── dashboard.js         (→ api, charts, utils)
 
-docs/
+dashboard/
 ├── index.html               (→ all CSS/JS)
 └── guide/
     └── *.html               (→ CSS)
