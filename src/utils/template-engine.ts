@@ -42,7 +42,7 @@ function processEachBlocks(template: string, data: TemplateData): string {
 
   return template.replace(
     eachRegex,
-    (match: string, arrayName: string, blockContent: string): string => {
+    (_match: string, arrayName: string, blockContent: string): string => {
       const array = data[arrayName as keyof TemplateData];
 
       if (!Array.isArray(array) || array.length === 0) {
@@ -69,7 +69,7 @@ function processIfBlocks(template: string, data: TemplateData): string {
 
   return template.replace(
     ifRegex,
-    (match: string, conditionName: string, blockContent: string): string => {
+    (_match: string, conditionName: string, blockContent: string): string => {
       const condition = data[conditionName as keyof TemplateData];
 
       // Simple truthy check
@@ -86,7 +86,7 @@ function processIfBlocks(template: string, data: TemplateData): string {
  * Replace simple variables {{variable}}
  */
 function replaceVariables(template: string, data: TemplateData): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (match: string, varName: string): string => {
+  return template.replace(/\{\{(\w+)\}\}/g, (_match: string, varName: string): string => {
     const value = data[varName as keyof TemplateData];
 
     if (value === undefined || value === null) {
