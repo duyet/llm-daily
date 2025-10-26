@@ -10,7 +10,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { glob } from 'glob';
 import * as yaml from 'js-yaml';
-import { parseExpression } from 'cron-parser';
+import cronParser from 'cron-parser';
 import type { Analytics, TaskRunSummary, HistoricalData } from '../types/analytics.types.js';
 import type { TaskConfig } from '../types/config.types.js';
 
@@ -62,7 +62,7 @@ async function scanTasks(): Promise<TaskInfo[]> {
  */
 function calculateNextRun(cronExpression: string): string | null {
   try {
-    const interval = parseExpression(cronExpression, {
+    const interval = cronParser.parseExpression(cronExpression, {
       tz: 'UTC',
       currentDate: new Date(),
     });

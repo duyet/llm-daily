@@ -1,21 +1,67 @@
 {
-  "totalRuns": 1,
-  "totalTokens": 1500,
-  "totalCost": 0.00045,
-  "totalInputTokens": 1000,
-  "totalOutputTokens": 500,
-  "successRate": 1,
-  "lastUpdated": "2025-10-26T17:35:30.910Z",
+  "totalRuns": 0,
+  "totalTokens": 0,
+  "totalCost": 0,
+  "totalInputTokens": 0,
+  "totalOutputTokens": 0,
+  "successRate": 0,
+  "lastUpdated": "2025-10-26T21:14:31.024Z",
   "tasks": {
-    "test-task": {
-      "runs": 1,
-      "tokens": 1500,
-      "inputTokens": 1000,
-      "outputTokens": 500,
-      "cost": 0.00045,
-      "successRate": 1,
-      "lastRun": "2025-10-26T17:35:30.908Z",
-      "avgResponseTime": 2
+    "tech-news-daily": {
+      "runs": 0,
+      "tokens": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "cost": 0,
+      "successRate": 0,
+      "lastRun": null,
+      "avgResponseTime": 0,
+      "schedule": "0 9 * * *",
+      "nextRun": "2025-10-27T09:00:00.000Z",
+      "recentRuns": [],
+      "status": "pending"
+    },
+    "github-trending": {
+      "runs": 0,
+      "tokens": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "cost": 0,
+      "successRate": 0,
+      "lastRun": null,
+      "avgResponseTime": 0,
+      "schedule": "0 10 * * *",
+      "nextRun": "2025-10-27T10:00:00.000Z",
+      "recentRuns": [],
+      "status": "pending"
+    },
+    "daily-motivation": {
+      "runs": 0,
+      "tokens": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "cost": 0,
+      "successRate": 0,
+      "lastRun": null,
+      "avgResponseTime": 0,
+      "schedule": "0 7 * * *",
+      "nextRun": "2025-10-27T07:00:00.000Z",
+      "recentRuns": [],
+      "status": "pending"
+    },
+    "crypto-market-summary": {
+      "runs": 0,
+      "tokens": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "cost": 0,
+      "successRate": 0,
+      "lastRun": null,
+      "avgResponseTime": 0,
+      "schedule": "0 11 * * *",
+      "nextRun": "2025-10-27T11:00:00.000Z",
+      "recentRuns": [],
+      "status": "pending"
     },
     "ai-news-vietnam": {
       "runs": 0,
@@ -32,14 +78,5 @@
       "status": "pending"
     }
   },
-  "daily": [
-    {
-      "date": "2025-10-26",
-      "runs": 1,
-      "tokens": 1500,
-      "cost": 0.00045,
-      "successes": 1,
-      "failures": 0
-    }
-  ]
+  "daily": []
 }
