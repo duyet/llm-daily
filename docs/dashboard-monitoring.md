@@ -298,12 +298,27 @@ Dashboard builder:
 - **No rate limits**: All data is local
 - **Offline capable**: Works without internet
 
+### Styling & Customization
+
+The dashboard uses **Tailwind CSS** for styling:
+
+- **CDN-based**: No build step required
+- **Custom colors**: Claude.ai-inspired color scheme (cream, beige, purple)
+- **Responsive utilities**: Mobile-first responsive design
+- **Dark mode**: Built-in dark mode support with custom utilities
+- **Inter font**: Professional typography via Google Fonts
+
+To customize colors:
+1. Edit the Tailwind config in `dashboard/index.html`
+2. Modify color values in the `theme.extend.colors` section
+3. Changes apply immediately (no rebuild needed)
+
 ### Browser Compatibility
 
 - Modern browsers (Chrome, Firefox, Safari, Edge)
 - Responsive design (mobile, tablet, desktop)
-- Dark mode support
-- No external dependencies (except Tailwind CSS and Chart.js from CDN)
+- Dark mode support with system preference detection
+- No build dependencies (Tailwind CSS via CDN)
 
 ## Future Enhancements
 

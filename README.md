@@ -330,11 +330,23 @@ provider:
 
 View analytics at `https://yourusername.github.io/llm-daily/`:
 
-- Task execution history
-- Cost tracking per provider
-- Token usage charts
-- Success/failure rates
-- Latest outputs
+- **Task execution history** - Complete run history with status
+- **Cost tracking** - Per-provider cost breakdown
+- **Token usage** - Input/output token statistics
+- **Success/failure rates** - Real-time task metrics
+- **Latest outputs** - Most recent task results
+- **Claude.ai design** - Beautiful, responsive interface
+- **Tailwind CSS** - Easy customization with utility classes
+- **Dark mode** - Built-in theme support
+
+### Customizing the Dashboard
+
+The dashboard uses Tailwind CSS for styling. No build step required:
+
+1. Edit `dashboard/index.html` Tailwind config
+2. Modify colors in `theme.extend.colors`
+3. Changes apply immediately via CDN
+4. See [GITHUB_PAGES_SETUP.md](GITHUB_PAGES_SETUP.md) for details
 
 ## 🧪 Development
 

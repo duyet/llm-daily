@@ -56,7 +56,7 @@ Your GitHub Pages dashboard displays:
 
 ```
 dashboard/
-├── index.html           # Main dashboard page
+├── index.html           # Main dashboard page (Tailwind CSS)
 ├── guide/              # Documentation pages
 │   ├── index.html
 │   └── .gitkeep
@@ -64,9 +64,7 @@ dashboard/
 │   ├── analytics.json  # Current analytics
 │   └── history/        # Monthly historical data
 │       └── YYYY-MM.json
-└── assets/             # CSS/JS for dashboard
-    ├── css/
-    │   └── main.css
+└── assets/             # JS for dashboard
     └── js/
         ├── dashboard.js
         └── theme.js
@@ -111,12 +109,33 @@ To use a custom domain (e.g., `llm.yourdomain.com`):
 
 ### Dashboard Styling
 
-Customize the dashboard appearance:
+The dashboard uses **Tailwind CSS** for styling. To customize:
 
-1. Edit `dashboard/assets/css/main.css`
-2. Modify colors, fonts, layouts
-3. Commit and push changes
-4. Dashboard updates automatically
+1. Edit the Tailwind config in `dashboard/index.html`:
+   ```javascript
+   tailwind.config = {
+     theme: {
+       extend: {
+         colors: {
+           // Your custom colors
+           cream: '#FAF9F6',
+           purple: '#6B4FBB',
+         }
+       }
+     }
+   }
+   ```
+2. Modify utility classes directly in HTML elements
+3. Add custom animations in the `<style type="text/tailwindcss">` block
+4. Commit and push changes
+5. Dashboard updates automatically
+
+**Benefits**:
+- No CSS build step required
+- Instant class changes via CDN
+- Industry-standard utility classes
+- Responsive design built-in
+- Dark mode support included
 
 ### Add Custom Pages
 

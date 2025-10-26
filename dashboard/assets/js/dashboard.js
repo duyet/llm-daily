@@ -56,18 +56,19 @@ function renderResultsTab(analytics) {
 
   if (tasks.length === 0) {
     container.innerHTML = `
-      <div class="empty-state">
-        <h3>No tasks yet</h3>
-        <p>Create your first task to see results here</p>
+      <div class="col-span-full text-center py-16 text-gray-500 dark:text-gray-400">
+        <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">No tasks yet</h3>
+        <p class="text-sm">Create your first task to see results here</p>
       </div>
     `;
     return;
   }
 
-  // Generate result cards
+  // Generate result cards with Tailwind classes
   container.innerHTML = tasks.map(task => {
-    const statusClass = task.successRate >= 0.95 ? 'success' :
-                       task.successRate >= 0.8 ? 'pending' : 'error';
+    const statusClass = task.successRate >= 0.95 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                       task.successRate >= 0.8 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                       'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
     const statusIcon = task.successRate >= 0.95 ? '✓' :
                       task.successRate >= 0.8 ? '⚠' : '✗';
 
@@ -77,26 +78,26 @@ function renderResultsTab(analytics) {
     const resultPreview = task.latestResult?.preview || 'Result data will be available after the next run';
 
     return `
-      <div class="result-card">
-        <div class="card-header">
-          <h3>${formatTaskName(task.name)}</h3>
-          <span class="status-badge ${statusClass}">
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 transition-all hover:shadow-lg hover:-translate-y-1 hover:border-purple-lighter shadow-sm">
+        <div class="flex justify-between items-start mb-4">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">${formatTaskName(task.name)}</h3>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusClass}">
             ${statusIcon} ${(task.successRate * 100).toFixed(0)}% Success
           </span>
         </div>
 
-        <div class="meta">
-          <span>🕐 ${timeAgo}</span>
-          <span>📊 ${formatNumber(task.tokens)} tokens</span>
-          <span>💰 $${task.cost.toFixed(3)}</span>
+        <div class="flex gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
+          <span class="flex items-center gap-1">🕐 ${timeAgo}</span>
+          <span class="flex items-center gap-1">📊 ${formatNumber(task.tokens)} tokens</span>
+          <span class="flex items-center gap-1">💰 $${task.cost.toFixed(3)}</span>
         </div>
 
-        <div class="result-preview">
-          <h4>Latest Result:</h4>
-          <p>${escapeHtml(resultPreview)}</p>
+        <div class="bg-beige dark:bg-gray-700 rounded-lg p-4 mb-4">
+          <h4 class="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Latest Result:</h4>
+          <p class="text-sm leading-relaxed text-gray-900 dark:text-gray-100 max-h-20 overflow-hidden relative whitespace-pre-wrap result-preview-gradient">${escapeHtml(resultPreview)}</p>
         </div>
 
-        <button class="view-more-btn" onclick="viewFullResult('${task.name}')">
+        <button class="w-full px-4 py-2.5 text-sm font-medium text-purple border border-purple rounded-lg transition-all hover:bg-purple hover:text-white" onclick="viewFullResult('${task.name}')">
           View Full Result →
         </button>
       </div>
@@ -125,8 +126,9 @@ function renderConfigTab(analytics) {
   }
 
   tbody.innerHTML = tasks.map(task => {
-    const statusClass = task.successRate >= 0.95 ? 'success' :
-                       task.successRate >= 0.8 ? 'pending' : 'error';
+    const statusClass = task.successRate >= 0.95 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                       task.successRate >= 0.8 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                       'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
     const statusText = task.successRate >= 0.95 ? 'Success' :
                       task.successRate >= 0.8 ? 'Warning' : 'Error';
 
@@ -134,14 +136,14 @@ function renderConfigTab(analytics) {
     const schedule = formatSchedule(task.schedule || 'Daily');
 
     return `
-      <tr onclick="viewTaskDetails('${task.name}')">
-        <td><span class="task-name">${formatTaskName(task.name)}</span></td>
-        <td>${schedule}</td>
-        <td><span class="table-badge ${statusClass}">${statusText}</span></td>
-        <td>${timeAgo}</td>
-        <td>${formatNumber(task.tokens)}</td>
-        <td>$${task.cost.toFixed(3)}</td>
-        <td><button class="action-btn" onclick="event.stopPropagation(); viewTaskDetails('${task.name}')">View</button></td>
+      <tr class="cursor-pointer transition-colors hover:bg-beige dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700 last:border-b-0" onclick="viewTaskDetails('${task.name}')">
+        <td class="px-4 py-4"><span class="font-semibold text-gray-900 dark:text-gray-100">${formatTaskName(task.name)}</span></td>
+        <td class="px-4 py-4 text-gray-700 dark:text-gray-300">${schedule}</td>
+        <td class="px-4 py-4"><span class="inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${statusClass}">${statusText}</span></td>
+        <td class="px-4 py-4 text-gray-700 dark:text-gray-300">${timeAgo}</td>
+        <td class="px-4 py-4 text-gray-700 dark:text-gray-300">${formatNumber(task.tokens)}</td>
+        <td class="px-4 py-4 text-gray-700 dark:text-gray-300">$${task.cost.toFixed(3)}</td>
+        <td class="px-4 py-4"><button class="px-3 py-1.5 text-xs font-medium text-purple border border-purple rounded-md transition-all hover:bg-purple hover:text-white" onclick="event.stopPropagation(); viewTaskDetails('${task.name}')">View</button></td>
       </tr>
     `;
   }).join('');
@@ -213,10 +215,10 @@ function viewTaskDetails(taskName) {
 function showError(message) {
   const container = document.getElementById('results-grid');
   container.innerHTML = `
-    <div class="empty-state" style="color: var(--error);">
-      <h3>Error Loading Dashboard</h3>
-      <p>${escapeHtml(message)}</p>
-      <p style="margin-top: 1rem;">Please check the console for more details.</p>
+    <div class="col-span-full text-center py-16 text-red-600 dark:text-red-400">
+      <h3 class="text-xl font-semibold mb-2">Error Loading Dashboard</h3>
+      <p class="text-sm">${escapeHtml(message)}</p>
+      <p class="text-sm mt-4">Please check the console for more details.</p>
     </div>
   `;
 }
