@@ -157,8 +157,14 @@ function extractWorkflowConfig(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: any
 ): WorkflowConfig {
+  // Handle both string and object schedule formats
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-  const schedule = config.schedule || '0 9 * * *'; // Default to 9 AM UTC
+  let schedule = config.schedule || '0 9 * * *'; // Default to 9 AM UTC
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  if (typeof schedule === 'object' && schedule.cron) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+    schedule = schedule.cron;
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
   const timeout = config.timeout || 30;

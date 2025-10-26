@@ -1,246 +1,228 @@
-// Dashboard main script
+// Dashboard main script - Claude.ai inspired
 
-// Load and display analytics data
+// Determine base path for GitHub Pages
+const basePath = window.location.pathname.includes('llm-daily') ? '/llm-daily' : '';
+
+// Global state
+let analyticsData = null;
+
+// Tab Management
+function initTabs() {
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const targetTab = button.dataset.tab;
+
+      // Update active states
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      tabContents.forEach(content => content.classList.remove('active'));
+
+      button.classList.add('active');
+      document.getElementById(`${targetTab}-tab`).classList.add('active');
+    });
+  });
+}
+
+// Load and display dashboard data
 async function loadDashboard() {
   try {
     // Load analytics data
-    const response = await fetch('/data/analytics.json');
-    if (!response.ok) throw new Error('Failed to load analytics');
+    const response = await fetch(`${basePath}/data/analytics.json`);
+    if (!response.ok) {
+      throw new Error(`Failed to load analytics: ${response.status} ${response.statusText}`);
+    }
 
-    const analytics = await response.json();
+    analyticsData = await response.json();
 
     // Render components
-    renderOverviewCards(analytics);
-    renderTaskCards(analytics);
-    renderCharts(analytics);
+    renderResultsTab(analyticsData);
+    renderConfigTab(analyticsData);
   } catch (error) {
     console.error('Error loading dashboard:', error);
-    showError('Failed to load analytics data');
+    showError(error.message);
   }
 }
 
-// Render overview cards
-function renderOverviewCards(analytics) {
-  const container = document.getElementById('overview-cards');
+// Render Tab 1: Results Dashboard
+function renderResultsTab(analytics) {
+  const container = document.getElementById('results-grid');
 
-  const cards = [
-    {
-      title: 'Total Runs',
-      value: analytics.totalRuns.toLocaleString(),
-      icon: '🚀',
-      color: 'blue'
-    },
-    {
-      title: 'Total Tokens',
-      value: (analytics.totalTokens / 1000).toFixed(1) + 'K',
-      icon: '🔤',
-      color: 'purple'
-    },
-    {
-      title: 'Total Cost',
-      value: '$' + analytics.totalCost.toFixed(2),
-      icon: '💰',
-      color: 'green'
-    },
-    {
-      title: 'Success Rate',
-      value: (analytics.successRate * 100).toFixed(1) + '%',
-      icon: '✅',
-      color: analytics.successRate >= 0.95 ? 'green' : 'yellow'
-    }
-  ];
-
-  container.innerHTML = cards.map(card => `
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow card">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm font-medium text-gray-600 dark:text-gray-400">${card.title}</p>
-          <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">${card.value}</p>
-        </div>
-        <div class="text-4xl">${card.icon}</div>
-      </div>
-    </div>
-  `).join('');
-}
-
-// Render task cards
-function renderTaskCards(analytics) {
-  const container = document.getElementById('task-cards');
-
-  const tasks = Object.entries(analytics.tasks).map(([name, metrics]) => ({
+  const tasks = Object.entries(analytics.tasks || {}).map(([name, metrics]) => ({
     name,
     ...metrics
   }));
 
   if (tasks.length === 0) {
     container.innerHTML = `
-      <div class="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
-        <p class="text-lg">No tasks yet. Create your first task to get started!</p>
+      <div class="empty-state">
+        <h3>No tasks yet</h3>
+        <p>Create your first task to see results here</p>
       </div>
     `;
     return;
   }
 
-  container.innerHTML = tasks.map(task => `
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow card">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${task.name}</h3>
-        <span class="${task.successRate >= 0.95 ? 'badge-success' : task.successRate >= 0.8 ? 'badge-pending' : 'badge-error'}">
-          ${(task.successRate * 100).toFixed(0)}% success
-        </span>
+  // Generate result cards
+  container.innerHTML = tasks.map(task => {
+    const statusClass = task.successRate >= 0.95 ? 'success' :
+                       task.successRate >= 0.8 ? 'pending' : 'error';
+    const statusIcon = task.successRate >= 0.95 ? '✓' :
+                      task.successRate >= 0.8 ? '⚠' : '✗';
+
+    const timeAgo = task.lastRun ? formatTimeAgo(new Date(task.lastRun)) : 'Never';
+
+    // Get result preview (placeholder for now - will be populated by builder)
+    const resultPreview = task.latestResult?.preview || 'Result data will be available after the next run';
+
+    return `
+      <div class="result-card">
+        <div class="card-header">
+          <h3>${formatTaskName(task.name)}</h3>
+          <span class="status-badge ${statusClass}">
+            ${statusIcon} ${(task.successRate * 100).toFixed(0)}% Success
+          </span>
+        </div>
+
+        <div class="meta">
+          <span>🕐 ${timeAgo}</span>
+          <span>📊 ${formatNumber(task.tokens)} tokens</span>
+          <span>💰 $${task.cost.toFixed(3)}</span>
+        </div>
+
+        <div class="result-preview">
+          <h4>Latest Result:</h4>
+          <p>${escapeHtml(resultPreview)}</p>
+        </div>
+
+        <button class="view-more-btn" onclick="viewFullResult('${task.name}')">
+          View Full Result →
+        </button>
       </div>
-      <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-        <div class="flex justify-between">
-          <span>Runs:</span>
-          <span class="font-medium text-gray-900 dark:text-white">${task.runs}</span>
-        </div>
-        <div class="flex justify-between">
-          <span>Tokens:</span>
-          <span class="font-medium text-gray-900 dark:text-white">${(task.tokens / 1000).toFixed(1)}K</span>
-        </div>
-        <div class="flex justify-between">
-          <span>Cost:</span>
-          <span class="font-medium text-gray-900 dark:text-white">$${task.cost.toFixed(2)}</span>
-        </div>
-        <div class="flex justify-between">
-          <span>Avg Time:</span>
-          <span class="font-medium text-gray-900 dark:text-white">${task.avgResponseTime.toFixed(1)}s</span>
-        </div>
-        ${task.lastRun ? `
-          <div class="flex justify-between">
-            <span>Last Run:</span>
-            <span class="font-medium text-gray-900 dark:text-white">${new Date(task.lastRun).toLocaleDateString()}</span>
-          </div>
-        ` : ''}
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
-// Render charts
-function renderCharts(analytics) {
-  const isDark = document.documentElement.classList.contains('dark');
-  const textColor = isDark ? '#e5e7eb' : '#374151';
-  const gridColor = isDark ? '#374151' : '#e5e7eb';
+// Render Tab 2: Configuration Table
+function renderConfigTab(analytics) {
+  const tbody = document.querySelector('#config-table tbody');
 
-  // Cost & Tokens Chart
-  const costCtx = document.getElementById('cost-chart').getContext('2d');
-  new Chart(costCtx, {
-    type: 'line',
-    data: {
-      labels: analytics.daily.slice(0, 7).reverse().map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
-      datasets: [
-        {
-          label: 'Cost ($)',
-          data: analytics.daily.slice(0, 7).reverse().map(d => d.cost),
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          tension: 0.4,
-          yAxisID: 'y'
-        },
-        {
-          label: 'Tokens (K)',
-          data: analytics.daily.slice(0, 7).reverse().map(d => d.tokens / 1000),
-          borderColor: '#8b5cf6',
-          backgroundColor: 'rgba(139, 92, 246, 0.1)',
-          tension: 0.4,
-          yAxisID: 'y1'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      interaction: {
-        mode: 'index',
-        intersect: false
-      },
-      scales: {
-        y: {
-          type: 'linear',
-          display: true,
-          position: 'left',
-          ticks: { color: textColor },
-          grid: { color: gridColor }
-        },
-        y1: {
-          type: 'linear',
-          display: true,
-          position: 'right',
-          ticks: { color: textColor },
-          grid: { drawOnChartArea: false }
-        },
-        x: {
-          ticks: { color: textColor },
-          grid: { color: gridColor }
-        }
-      },
-      plugins: {
-        legend: {
-          labels: { color: textColor }
-        }
-      }
-    }
-  });
+  const tasks = Object.entries(analytics.tasks || {}).map(([name, metrics]) => ({
+    name,
+    ...metrics
+  }));
 
-  // Success Rate Chart
-  const successCtx = document.getElementById('success-chart').getContext('2d');
-  new Chart(successCtx, {
-    type: 'bar',
-    data: {
-      labels: analytics.daily.slice(0, 7).reverse().map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
-      datasets: [
-        {
-          label: 'Successes',
-          data: analytics.daily.slice(0, 7).reverse().map(d => d.successes),
-          backgroundColor: '#10b981'
-        },
-        {
-          label: 'Failures',
-          data: analytics.daily.slice(0, 7).reverse().map(d => d.failures),
-          backgroundColor: '#ef4444'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        x: {
-          stacked: true,
-          ticks: { color: textColor },
-          grid: { color: gridColor }
-        },
-        y: {
-          stacked: true,
-          ticks: { color: textColor },
-          grid: { color: gridColor }
-        }
-      },
-      plugins: {
-        legend: {
-          labels: { color: textColor }
-        }
-      }
-    }
-  });
+  if (tasks.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-tertiary);">
+          No tasks configured yet
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = tasks.map(task => {
+    const statusClass = task.successRate >= 0.95 ? 'success' :
+                       task.successRate >= 0.8 ? 'pending' : 'error';
+    const statusText = task.successRate >= 0.95 ? 'Success' :
+                      task.successRate >= 0.8 ? 'Warning' : 'Error';
+
+    const timeAgo = task.lastRun ? formatTimeAgo(new Date(task.lastRun)) : 'Never';
+    const schedule = formatSchedule(task.schedule || 'Daily');
+
+    return `
+      <tr onclick="viewTaskDetails('${task.name}')">
+        <td><span class="task-name">${formatTaskName(task.name)}</span></td>
+        <td>${schedule}</td>
+        <td><span class="table-badge ${statusClass}">${statusText}</span></td>
+        <td>${timeAgo}</td>
+        <td>${formatNumber(task.tokens)}</td>
+        <td>$${task.cost.toFixed(3)}</td>
+        <td><button class="action-btn" onclick="event.stopPropagation(); viewTaskDetails('${task.name}')">View</button></td>
+      </tr>
+    `;
+  }).join('');
 }
 
-// Show error message
+// Helper Functions
+function formatTaskName(name) {
+  return name
+    .split(/[-_]/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+function formatTimeAgo(date) {
+  const seconds = Math.floor((new Date() - date) / 1000);
+
+  const intervals = {
+    year: 31536000,
+    month: 2592000,
+    week: 604800,
+    day: 86400,
+    hour: 3600,
+    minute: 60
+  };
+
+  for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+    const interval = Math.floor(seconds / secondsInUnit);
+    if (interval >= 1) {
+      return `${interval} ${unit}${interval !== 1 ? 's' : ''} ago`;
+    }
+  }
+
+  return 'Just now';
+}
+
+function formatNumber(num) {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+  return num.toString();
+}
+
+function formatSchedule(schedule) {
+  // Parse cron or display friendly schedule
+  if (typeof schedule === 'string') {
+    if (schedule.includes('*')) return 'Custom Schedule';
+    return schedule;
+  }
+  return 'Daily';
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Actions
+function viewFullResult(taskName) {
+  // For now, show alert. Can be enhanced to open modal or navigate
+  alert(`View full result for: ${formatTaskName(taskName)}\n\nThis will be implemented to show the complete result output.`);
+}
+
+function viewTaskDetails(taskName) {
+  // For now, show alert. Can be enhanced to open modal with full task details
+  alert(`View details for: ${formatTaskName(taskName)}\n\nThis will show configuration, history, and full results.`);
+}
+
+// Error Display
 function showError(message) {
-  const container = document.getElementById('overview-cards');
+  const container = document.getElementById('results-grid');
   container.innerHTML = `
-    <div class="col-span-full bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4">
-      <p class="text-red-800 dark:text-red-200">${message}</p>
+    <div class="empty-state" style="color: var(--error);">
+      <h3>Error Loading Dashboard</h3>
+      <p>${escapeHtml(message)}</p>
+      <p style="margin-top: 1rem;">Please check the console for more details.</p>
     </div>
   `;
 }
 
-// Initialize dashboard on load
-document.addEventListener('DOMContentLoaded', loadDashboard);
-
-// Re-render charts on theme change
-const themeToggle = document.getElementById('theme-toggle');
-if (themeToggle) {
-  themeToggle.addEventListener('click', () => {
-    setTimeout(loadDashboard, 100); // Wait for theme to apply
-  });
-}
+// Initialize Dashboard
+document.addEventListener('DOMContentLoaded', () => {
+  initTabs();
+  loadDashboard();
+});

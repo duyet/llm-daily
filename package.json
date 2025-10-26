@@ -44,12 +44,16 @@
     "task:generate": "node dist/cli.js generate",
     "task:run": "node dist/cli.js run",
     "task:list": "node dist/cli.js list",
-    "task:validate": "node dist/cli.js validate"
+    "task:validate": "node dist/cli.js validate",
+    "dashboard:build": "node dist/scripts/build-dashboard-data.js"
   },
   "dependencies": {
     "commander": "^12.1.0",
+    "cron-parser": "^4.9.0",
     "dotenv": "^17.2.3",
+    "glob": "^10.3.10",
     "inquirer": "^9.2.15",
+    "js-yaml": "^4.1.0",
     "openai": "^4.28.0",
     "yaml": "^2.4.0",
     "zod": "^3.22.4"

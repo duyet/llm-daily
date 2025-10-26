@@ -5,58 +5,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LLM Daily - Dashboard</title>
   <meta name="description" content="Automated LLM task scheduling with GitHub Actions">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="assets/css/main.css">
 </head>
-<body class="bg-gray-50 dark:bg-gray-900">
-  <nav id="navigation" class="bg-white dark:bg-gray-800 shadow-sm">
-    <div class="container mx-auto px-4 py-4">
-      <div class="flex justify-between items-center">
-        <div class="flex items-center space-x-8">
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">🤖 LLM Daily</h1>
-          <div class="hidden md:flex space-x-6">
-            <a href="/" class="text-blue-600 dark:text-blue-400 font-medium">Dashboard</a>
-            <a href="guide/" class="text-gray-600 dark:text-gray-300 hover:text-blue-600">Guide</a>
-            <a href="https://github.com/yourusername/llm-daily" target="_blank" class="text-gray-600 dark:text-gray-300 hover:text-blue-600">GitHub</a>
-          </div>
-        </div>
-        <button id="theme-toggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
-          <span class="dark:hidden">🌙</span>
-          <span class="hidden dark:inline">☀️</span>
-        </button>
-      </div>
+<body>
+  <nav>
+    <div class="container">
+      <h1>🤖 LLM Daily</h1>
+      <p>Automated task results dashboard</p>
     </div>
   </nav>
 
-  <main class="container mx-auto px-4 py-8">
-    <!-- Overview Cards -->
-    <section id="overview-cards" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-      <!-- Cards will be injected by JavaScript -->
-    </section>
+  <main class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-button active" data-tab="results">📊 Results</button>
+      <button class="tab-button" data-tab="config">⚙️ Configuration</button>
+    </div>
 
-    <!-- Task Cards -->
-    <section id="task-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-      <!-- Task cards will be injected by JavaScript -->
-    </section>
+    <!-- Tab 1: Results Dashboard -->
+    <div id="results-tab" class="tab-content active">
+      <div id="results-grid" class="results-grid">
+        <!-- Result cards will be injected here -->
+        <div class="empty-state">
+          <h3>Loading results...</h3>
+          <p>Please wait while we fetch the latest task results</p>
+        </div>
+      </div>
+    </div>
 
-    <!-- Charts -->
-    <section id="charts" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cost & Tokens (Last 7 Days)</h3>
-        <canvas id="cost-chart"></canvas>
+    <!-- Tab 2: Configuration Table -->
+    <div id="config-tab" class="tab-content">
+      <div class="config-table-container">
+        <table class="data-table" id="config-table">
+          <thead>
+            <tr>
+              <th>Job Name</th>
+              <th>Schedule</th>
+              <th>Status</th>
+              <th>Last Run</th>
+              <th>Tokens</th>
+              <th>Cost</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Table rows will be injected here -->
+          </tbody>
+        </table>
       </div>
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Success Rate</h3>
-        <canvas id="success-chart"></canvas>
-      </div>
-    </section>
+    </div>
   </main>
 
-  <footer class="bg-white dark:bg-gray-800 shadow-sm mt-12">
-    <div class="container mx-auto px-4 py-6 text-center text-gray-600 dark:text-gray-400">
-      <p>LLM Daily - Automated LLM task scheduling with GitHub Actions</p>
-    </div>
+  <footer>
+    <p>LLM Daily - Automated LLM task scheduling with GitHub Actions</p>
+    <p style="margin-top: 0.5rem;"><a href="https://github.com/duet/llm-daily" target="_blank" style="color: var(--accent-primary); text-decoration: none;">View on GitHub →</a></p>
   </footer>
 
   <script src="assets/js/theme.js"></script>

@@ -41,6 +41,10 @@ jobs:
 {{/each}}
 {{/if}}
 
+      - name: Build dashboard data
+        run: npm run dashboard:build
+        continue-on-error: true
+
       - name: Commit results
         run: |
           git config --global user.name "github-actions[bot]"

@@ -1,5 +1,8 @@
 # AI News Summary - Vietnamese
-schedule: "0 8 * * *"  # Daily at 8 AM UTC (3 PM Vietnam time)
+schedule:
+  cron: "0 8 * * *"  # Daily at 8 AM UTC (3 PM Vietnam time)
+  timezone: "Asia/Ho_Chi_Minh"
+  enabled: true
 
 providers:
   - id: openrouter:minimax/minimax-m2:free
