@@ -125,7 +125,7 @@ providers:
     });
 
     it('should handle malformed YAML', async () => {
-      // Create task with invalid YAML
+      // Create task with truly invalid YAML that cannot be parsed
       const taskDir = join(tasksDir, 'bad-yaml');
       await fs.mkdir(taskDir);
       await fs.writeFile(
@@ -133,7 +133,7 @@ providers:
         `schedule: "0 9 * * *"
 providers:
   - id: openai:gpt-4
-    this is invalid yaml: {{{ }}}
+    [invalid unbalanced brackets
 `,
         'utf-8'
       );

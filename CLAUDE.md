@@ -218,6 +218,20 @@ Follow semantic commit format with consistent scoping:
 
 Avoid complex or fancy words like "comprehensive", "elaborate", "detailed", "extensive" in commit messages. Use simple, clear English.
 
+## Co-author Convention
+
+All commits should include co-author attribution:
+```bash
+git commit -m "feat: your commit message
+
+Co-authored-by: duyetbot <duyetbot@users.noreply.github.com>"
+```
+
+Or configure git to automatically include:
+```bash
+git config commit.template .gitmessage
+```
+
 ## Phase-Based Development
 
 This project follows an 8-phase implementation plan (Phase 0-7). See `docs/implementation/PROGRESS.md` for current status and `docs/implementation/phase-*.md` for detailed task breakdowns.

@@ -1,0 +1,31 @@
+# AI News Summary - Vietnamese
+schedule: "0 8 * * *"  # Daily at 8 AM UTC (3 PM Vietnam time)
+
+providers:
+  - id: openai:gpt-4o-mini
+    config:
+      temperature: 0.7
+      max_tokens: 2000
+
+memory:
+  enabled: true
+  updateStrategy: extract
+  deduplicationPrompt: |
+    Previous memory: {{memory}}
+    Today: {{date}}
+
+    Has there been significant AI news in the last 24 hours that differs from previous summaries?
+    Reply with JSON: {"shouldRun": true/false, "reason": "explanation in Vietnamese"}
+
+  extractPrompt: |
+    Extract key AI trends and topics mentioned today for future reference.
+    List any recurring themes or emerging patterns.
+
+outputs:
+  - type: commit
+    path: docs/data/tasks/ai-news-vietnam.json
+    message: "chore(ai-news): update AI news summary [skip ci]"
+
+  - type: file
+    path: results/{{date}}.md
+    format: markdown
