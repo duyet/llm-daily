@@ -4,7 +4,7 @@
  */
 
 export interface TemplateData {
-  [key: string]: string | number | boolean | TemplateData[] | TemplateData | unknown;
+  [key: string]: string | number | boolean | TemplateData[] | TemplateData;
 }
 
 /**
