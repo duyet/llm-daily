@@ -71,8 +71,12 @@ function normalizeModelName(model: string): string {
   const cleaned = model.replace(/-\d{4}(-\d{2}-\d{2})?(-preview)?$/, '');
 
   // Handle OpenAI shortcuts
-  if (cleaned === 'gpt-4-32k') return 'gpt-4';
-  if (cleaned === 'gpt-3.5-turbo-16k') return 'gpt-3.5-turbo';
+  if (cleaned === 'gpt-4-32k') {
+    return 'gpt-4';
+  }
+  if (cleaned === 'gpt-3.5-turbo-16k') {
+    return 'gpt-3.5-turbo';
+  }
 
   return cleaned;
 }

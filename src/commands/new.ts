@@ -104,7 +104,9 @@ async function getTaskDetails(
         message: 'Task name:',
         default: taskName,
         validate: (input: string) => {
-          if (!input) return 'Task name is required';
+          if (!input) {
+            return 'Task name is required';
+          }
           if (!/^[a-z0-9-]+$/.test(input)) {
             return 'Task name must contain only lowercase letters, numbers, and hyphens';
           }

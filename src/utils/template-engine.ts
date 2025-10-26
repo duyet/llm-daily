@@ -50,7 +50,7 @@ function processEachBlocks(template: string, data: TemplateData): string {
     return array
       .map((item: TemplateData | string | number | boolean) => {
         if (typeof item === 'object' && item !== null) {
-          return replaceVariables(blockContent, item as TemplateData);
+          return replaceVariables(blockContent, item);
         }
         return blockContent.replace(/\{\{(\w+)\}\}/g, String(item));
       })
