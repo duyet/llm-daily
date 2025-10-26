@@ -183,8 +183,10 @@ export class MemoryManager {
           updatedContent = this.replaceStrategy(this.content, options.newContent);
           break;
 
-        default:
-          throw new MemoryError(`Unknown update strategy: ${options.strategy}`);
+        default: {
+          const _exhaustiveCheck: never = options.strategy;
+          throw new MemoryError(`Unknown update strategy: ${String(_exhaustiveCheck)}`);
+        }
       }
 
       // Apply metadata updates

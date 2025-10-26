@@ -27,7 +27,7 @@ class AnalyticsManager {
   async initialize(): Promise<void> {
     try {
       const data = await fs.readFile(ANALYTICS_PATH, 'utf-8');
-      this.analytics = JSON.parse(data);
+      this.analytics = JSON.parse(data) as Analytics;
     } catch {
       // Initialize new analytics
       this.analytics = {
@@ -189,7 +189,7 @@ class AnalyticsManager {
 
     try {
       const data = await fs.readFile(historyFile, 'utf-8');
-      historicalData = JSON.parse(data);
+      historicalData = JSON.parse(data) as HistoricalData;
     } catch {
       // Create new month
       historicalData = {
@@ -282,7 +282,7 @@ class AnalyticsManager {
     try {
       const historyFile = path.join(HISTORY_DIR, `${month}.json`);
       const data = await fs.readFile(historyFile, 'utf-8');
-      return JSON.parse(data);
+      return JSON.parse(data) as HistoricalData;
     } catch {
       return null;
     }

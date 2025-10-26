@@ -97,7 +97,8 @@ async function getTaskDetails(
 }> {
   if (options.interactive || !taskName) {
     // Interactive mode
-    const answers = await inquirer.prompt([
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const answers: Record<string, unknown> = await inquirer.prompt([
       {
         type: 'input',
         name: 'name',
