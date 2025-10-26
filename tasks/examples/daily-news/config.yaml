@@ -1,0 +1,49 @@
+# Daily Tech News Aggregation Task
+# Runs every morning at 8 AM UTC to provide a curated tech news summary
+
+# Schedule: Daily at 8:00 AM UTC
+schedule: "0 8 * * *"
+
+# Provider configuration
+providers:
+  - id: openai:gpt-4o-mini  # Cost-effective model for daily summaries
+    config:
+      temperature: 0.7  # Balanced creativity
+      max_tokens: 1500  # Enough for comprehensive summary
+
+# Memory configuration for deduplication
+memory:
+  enabled: true
+  updateStrategy: extract  # Extract key insights after each run
+
+  # Skip if news is too similar to yesterday
+  deduplicationPrompt: |
+    Review today's news against previous summaries in the memory.
+
+    Skip today's summary if:
+    - The main topics are nearly identical to yesterday
+    - No significant new developments have occurred
+    - The news cycle is repetitive
+
+    Return "SKIP" if we should skip, or "PROCEED" if there's fresh content worth summarizing.
+
+  # Extract key topics to track over time
+  extractPrompt: |
+    Extract 3-5 key topics mentioned in today's summary.
+    Format as a simple bulleted list of topics only.
+
+    Examples:
+    - AI regulation debate
+    - Quantum computing breakthrough
+    - Chip shortage continues
+
+# Output configuration
+outputs:
+  # Auto-commit to repository (triggers GitHub Pages update)
+  - type: commit
+    path: docs/data/tasks/{{taskName}}.json
+
+  # Also save to dated markdown file
+  - type: file
+    path: results/news/{{year}}/{{month}}/{{date}}.md
+    format: markdown

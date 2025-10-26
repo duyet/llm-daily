@@ -1,0 +1,37 @@
+# Stock Market Summary Task
+# Runs every weekday at 9:30 AM UTC (after US market open)
+
+schedule: "30 9 * * 1-5"  # Monday-Friday only
+
+providers:
+  - id: openai:gpt-4o-mini
+    config:
+      temperature: 0.3  # Lower temperature for factual financial data
+      max_tokens: 1000
+
+memory:
+  enabled: true
+  updateStrategy: extract
+
+  deduplicationPrompt: |
+    Check if the market has moved significantly since the last summary.
+
+    Skip if:
+    - Major indices moved less than 0.5% in either direction
+    - No significant sector rotations
+    - Volume is below average and no major news
+
+    Return "SKIP" to skip or "PROCEED" for meaningful changes.
+
+  extractPrompt: |
+    Extract:
+    - Major index levels (S&P 500, Nasdaq, Dow)
+    - Top 3 performing sectors
+    - Top 3 underperforming sectors
+
+outputs:
+  - type: commit
+    path: docs/data/tasks/{{taskName}}.json
+
+  - type: file
+    path: results/markets/{{year}}/{{month}}/{{date}}.md

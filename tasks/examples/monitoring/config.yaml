@@ -1,0 +1,40 @@
+# Website Monitoring Task
+# Checks website health every hour and alerts on issues
+
+schedule: "0 * * * *"  # Every hour
+
+providers:
+  - id: openai:gpt-4o-mini
+    config:
+      temperature: 0.1  # Very factual for monitoring
+      max_tokens: 500
+
+memory:
+  enabled: true
+  updateStrategy: replace  # Replace memory with latest status
+
+  # Only alert if there's a problem
+  deduplicationPrompt: |
+    Check if the current status differs from the previous status in memory.
+
+    PROCEED if:
+    - Status changed from UP to DOWN or vice versa
+    - New errors appeared
+    - Response time degraded significantly (>50% slower)
+
+    SKIP if everything is the same as before.
+
+outputs:
+  # Log to repository
+  - type: commit
+    path: docs/data/tasks/{{taskName}}.json
+
+  # Send webhook alert (configure your webhook URL)
+  - type: webhook
+    url: https://hooks.slack.com/services/YOUR/WEBHOOK/HERE
+    # or Discord, Teams, custom endpoint, etc.
+
+  # Append to monitoring log
+  - type: file
+    path: results/monitoring/health-log.md
+    mode: append

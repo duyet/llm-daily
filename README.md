@@ -1,8 +1,13 @@
-# LLM Daily
+# 🤖 LLM Daily
 
-**Automated LLM task scheduling with GitHub Actions**
+> Automated LLM task scheduling with GitHub Actions - Run AI tasks on a schedule, for free, forever.
 
-A template repository for running scheduled LLM tasks with persistent memory, cost tracking, and integrated dashboard.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
+[![Tests](https://img.shields.io/badge/tests-218%20passing-brightgreen)](https://github.com/yourusername/llm-daily)
+
+**LLM Daily** is a template repository that lets you run scheduled LLM tasks completely free using GitHub Actions. Perfect for daily summaries, monitoring, research, or any recurring AI task.
 
 ## ✨ Features
 

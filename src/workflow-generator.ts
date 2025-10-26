@@ -132,8 +132,8 @@ async function generateWorkflow(
   const content = renderTemplate(template, {
     taskName: task.config.taskName,
     schedule: task.config.schedule,
-    timeout: task.config.timeout,
-    secrets: task.config.secrets,
+    timeout: task.config.timeout.toString(),
+    secrets: JSON.stringify(task.config.secrets || []),
     description: task.config.description || '',
   });
 
