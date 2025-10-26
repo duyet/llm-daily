@@ -9,7 +9,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { glob } from 'glob';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { parseExpression } from 'cron-parser';
 import type { Analytics, TaskRunSummary, HistoricalData } from '../types/analytics.types.js';
 import type { TaskConfig } from '../types/config.types.js';

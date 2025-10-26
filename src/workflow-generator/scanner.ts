@@ -7,7 +7,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import { parse as parseYaml } from 'yaml';
 import type { ScannedTask, WorkflowConfig, WorkflowSecret } from '../types/workflow.types.js';
-import { taskConfigSchema } from '../types/config.types.js';
+import { taskConfigSchema, type TaskConfig } from '../types/config.types.js';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -152,21 +152,16 @@ async function scanTask(name: string, path: string, _showWarnings: boolean): Pro
 /**
  * Extract workflow configuration from task config
  */
-function extractWorkflowConfig(
-  taskName: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  config: any
-): WorkflowConfig {
-  // Handle both string and object schedule formats
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-  let schedule = config.schedule || '0 9 * * *'; // Default to 9 AM UTC
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  if (typeof schedule === 'object' && schedule.cron) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-    schedule = schedule.cron;
+function extractWorkflowConfig(taskName: string, config: TaskConfig): WorkflowConfig {
+  // Extract cron schedule from ScheduleConfig object, string, or use default
+  let schedule = '0 9 * * *'; // Default to 9 AM UTC
+  if (typeof config.schedule === 'string') {
+    schedule = config.schedule;
+  } else if (typeof config.schedule === 'object' && config.schedule?.cron) {
+    schedule = config.schedule.cron;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+  // Use timeout from config or default
   const timeout = config.timeout || 30;
 
   // Extract secrets from provider configurations
@@ -174,12 +169,9 @@ function extractWorkflowConfig(
 
   return {
     taskName,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     schedule,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     timeout,
     secrets,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
     description: config.description,
   };
 }
@@ -187,20 +179,15 @@ function extractWorkflowConfig(
 /**
  * Extract required secrets from provider configurations
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extractSecrets(config: any): WorkflowSecret[] {
+function extractSecrets(config: TaskConfig): WorkflowSecret[] {
   const secrets: WorkflowSecret[] = [];
   const seenSecrets = new Set<string>();
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   if (config.providers && Array.isArray(config.providers)) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     for (const provider of config.providers) {
       // Type guard: ensure provider is an object with id property
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-      const providerAny = provider as any;
-      if (typeof providerAny.id === 'string') {
-        const providerId = providerAny.id as string;
+      if (typeof provider.id === 'string') {
+        const providerId = provider.id;
 
         // Skip free models - they don't require API keys
         // Free models are identified by ":free" suffix (e.g., "openrouter:minimax/minimax-m2:free")
@@ -208,7 +195,6 @@ function extractSecrets(config: any): WorkflowSecret[] {
           continue;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
         const [providerName] = providerId.split(':');
 
         // Map provider to required secret
