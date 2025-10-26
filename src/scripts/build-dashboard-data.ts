@@ -11,12 +11,7 @@ import path from 'path';
 import { glob } from 'glob';
 import yaml from 'js-yaml';
 import { parseExpression } from 'cron-parser';
-import type {
-  Analytics,
-  TaskMetrics,
-  TaskRunSummary,
-  HistoricalData,
-} from '../types/analytics.types.js';
+import type { Analytics, TaskRunSummary, HistoricalData } from '../types/analytics.types.js';
 import type { TaskConfig } from '../types/config.types.js';
 
 const ANALYTICS_PATH = 'dashboard/data/analytics.json';
@@ -41,7 +36,11 @@ async function scanTasks(): Promise<TaskInfo[]> {
     try {
       const taskName = path.basename(path.dirname(configFile));
       const content = await fs.readFile(configFile, 'utf-8');
-      const config = yaml.load(content) as TaskConfig;
+      const loadedConfig = yaml.load(content);
+      if (!loadedConfig || typeof loadedConfig !== 'object') {
+        throw new Error('Invalid config format');
+      }
+      const config = loadedConfig as TaskConfig;
 
       tasks.push({
         name: taskName,

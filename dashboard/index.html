@@ -81,8 +81,18 @@
   <!-- Navigation -->
   <nav class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
     <div class="max-w-screen-xl mx-auto px-8 py-4">
-      <h1 class="text-2xl font-bold text-purple tracking-tight leading-tight">🤖 LLM Daily</h1>
-      <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Automated task results dashboard</p>
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-2xl font-bold text-purple tracking-tight leading-tight">🤖 LLM Daily</h1>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Automated task results dashboard</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <span id="last-updated" class="text-xs text-gray-500 dark:text-gray-400"></span>
+          <button onclick="manualRefresh()" class="px-3 py-2 text-sm font-medium text-purple border border-purple rounded-lg transition-all hover:bg-purple hover:text-white" title="Refresh dashboard data">
+            🔄 Refresh
+          </button>
+        </div>
+      </div>
     </div>
   </nav>
 
@@ -144,7 +154,50 @@
     </p>
   </footer>
 
+  <!-- Result View Modal -->
+  <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target === this) closeResultModal()">
+    <div class="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl animate-fade-in">
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700 bg-beige dark:bg-gray-700">
+        <div>
+          <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100" id="modal-task-name">Full Result</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1" id="modal-metadata">Loading...</p>
+        </div>
+        <button onclick="closeResultModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600" aria-label="Close modal">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="p-6 overflow-y-auto max-h-[calc(90vh-180px)]" id="modal-content">
+        <div class="flex items-center justify-center py-12 text-gray-500 dark:text-gray-400">
+          <div class="text-center">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple mb-4"></div>
+            <p class="text-sm">Loading result...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-beige dark:bg-gray-700">
+        <button onclick="copyResultToClipboard()" class="flex-1 px-4 py-2.5 text-sm font-medium text-purple border border-purple rounded-lg transition-all hover:bg-purple hover:text-white" id="copy-btn">
+          📋 Copy to Clipboard
+        </button>
+        <button onclick="downloadResult()" class="flex-1 px-4 py-2.5 text-sm font-medium text-purple border border-purple rounded-lg transition-all hover:bg-purple hover:text-white" id="download-btn">
+          ⬇️ Download
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container (dynamically created by toast.js) -->
+
+  <!-- Scripts -->
   <script src="assets/js/theme.js"></script>
+  <script src="assets/js/toast.js"></script>
+  <script src="assets/js/result-fetcher.js"></script>
   <script src="assets/js/dashboard.js"></script>
 </body>
 </html>

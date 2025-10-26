@@ -198,12 +198,11 @@ function extractSecrets(config: any): WorkflowSecret[] {
     for (const provider of config.providers) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (typeof provider.id === 'string') {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
-        const providerId = provider.id;
+        const providerId = provider.id as string;
 
         // Skip free models - they don't require API keys
         // Free models are identified by ":free" suffix (e.g., "openrouter:minimax/minimax-m2:free")
-        if (providerId.includes(':free')) {
+        if (typeof providerId === 'string' && providerId.includes(':free')) {
           continue;
         }
 
