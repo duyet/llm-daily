@@ -20,6 +20,11 @@ import {
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 /**
+ * OpenRouter models API URL for pricing information
+ */
+const OPENROUTER_MODELS_API_URL = 'https://openrouter.ai/api/v1/models';
+
+/**
  * OpenRouter API response
  */
 interface OpenRouterResponse {
@@ -48,6 +53,19 @@ interface OpenRouterErrorResponse {
     type?: string;
     code?: string;
   };
+}
+
+/**
+ * OpenRouter model info from API
+ */
+interface OpenRouterModelInfo {
+  id: string;
+  name: string;
+  pricing: {
+    prompt: string; // Price per token as string
+    completion: string; // Price per token as string
+  };
+  context_length: number;
 }
 
 /**
@@ -161,20 +179,52 @@ export class OpenRouterProvider extends BaseProvider {
       return this.pricingCache.get(this.model)!;
     }
 
-    // For now, use default pricing
-    // In a real implementation, you would fetch from OpenRouter's pricing API
-    // https://openrouter.ai/api/v1/models
-    const pricing = DEFAULT_PRICING;
+    // Return default pricing synchronously
+    // Actual pricing will be fetched async and cached for next call
+    this.fetchAndCachePricing().catch(() => {
+      // Silently fail - we'll use default pricing
+    });
 
-    // Cache the pricing
-    this.pricingCache.set(this.model, pricing);
-
-    return pricing;
+    return DEFAULT_PRICING;
   }
 
-  // TODO: Implement dynamic pricing fetching from OpenRouter API
-  // Fetch from https://openrouter.ai/api/v1/models and cache pricing data
-  // This would improve cost estimation accuracy for various models
+  /**
+   * Fetch model pricing from OpenRouter API
+   * This runs asynchronously and caches results for future calls
+   */
+  private async fetchAndCachePricing(): Promise<void> {
+    try {
+      const response = await fetch(OPENROUTER_MODELS_API_URL, {
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+      });
+
+      if (!response.ok) {
+        // Failed to fetch pricing, use defaults
+        return;
+      }
+
+      const data = (await response.json()) as { data: OpenRouterModelInfo[] };
+
+      // Find matching model
+      const modelInfo = data.data.find((m: OpenRouterModelInfo) => m.id === this.model);
+
+      if (modelInfo) {
+        // Convert pricing from string (per token) to number (per 1K tokens)
+        const pricing: ModelPricing = {
+          input: parseFloat(modelInfo.pricing.prompt) * 1000,
+          output: parseFloat(modelInfo.pricing.completion) * 1000,
+        };
+
+        // Cache the pricing
+        this.pricingCache.set(this.model, pricing);
+      }
+    } catch {
+      // Silently fail - pricing fetch is not critical
+      // We'll continue using default pricing
+    }
+  }
 
   /**
    * Check if model supports prompt caching
