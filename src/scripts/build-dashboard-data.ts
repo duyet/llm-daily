@@ -11,6 +11,7 @@ import path from 'path';
 import { glob } from 'glob';
 import * as yaml from 'js-yaml';
 import cronParser from 'cron-parser';
+import { logger } from '../utils/logger.js';
 import type { Analytics, TaskRunSummary, HistoricalData } from '../types/analytics.types.js';
 import type { TaskConfig } from '../types/config.types.js';
 
@@ -50,7 +51,9 @@ async function scanTasks(): Promise<TaskInfo[]> {
         description: config.description,
       });
     } catch (error) {
-      console.warn(`Failed to load config for ${configFile}:`, error);
+      logger.warn(
+        `Failed to load config for ${configFile}: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -68,7 +71,9 @@ function calculateNextRun(cronExpression: string): string | null {
     });
     return interval.next().toISOString();
   } catch (error) {
-    console.warn(`Failed to parse cron expression: ${cronExpression}`, error);
+    logger.warn(
+      `Failed to parse cron expression: ${cronExpression} - ${error instanceof Error ? error.message : String(error)}`
+    );
     return null;
   }
 }
@@ -103,7 +108,9 @@ async function loadHistoricalData(): Promise<Map<string, TaskRunSummary[]>> {
           taskRuns.set(execution.taskName, runs);
         }
       } catch (error) {
-        console.warn(`Failed to load history file ${file}:`, error);
+        logger.warn(
+          `Failed to load history file ${file}: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     }
 
@@ -113,7 +120,9 @@ async function loadHistoricalData(): Promise<Map<string, TaskRunSummary[]>> {
       taskRuns.set(taskName, runs.slice(0, 10));
     }
   } catch (error) {
-    console.warn('No historical data found:', error);
+    logger.warn(
+      `No historical data found: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 
   return taskRuns;
@@ -123,7 +132,7 @@ async function loadHistoricalData(): Promise<Map<string, TaskRunSummary[]>> {
  * Build enhanced analytics data
  */
 async function buildDashboardData(): Promise<void> {
-  console.log('🔨 Building dashboard data...');
+  logger.info('🔨 Building dashboard data...');
 
   // Load existing analytics
   let analytics: Analytics;
@@ -131,7 +140,7 @@ async function buildDashboardData(): Promise<void> {
     const content = await fs.readFile(ANALYTICS_PATH, 'utf-8');
     analytics = JSON.parse(content) as Analytics;
   } catch {
-    console.log('⚠️  No existing analytics found, creating new...');
+    logger.info('⚠️  No existing analytics found, creating new...');
     analytics = {
       totalRuns: 0,
       totalTokens: 0,
@@ -146,17 +155,17 @@ async function buildDashboardData(): Promise<void> {
   }
 
   // Scan tasks
-  console.log('📋 Scanning task configurations...');
+  logger.info('📋 Scanning task configurations...');
   const tasks = await scanTasks();
-  console.log(`✓ Found ${tasks.length} tasks`);
+  logger.info(`✓ Found ${tasks.length} tasks`);
 
   // Load historical data
-  console.log('📊 Loading historical execution data...');
+  logger.info('📊 Loading historical execution data...');
   const taskRuns = await loadHistoricalData();
 
   // Enhance task metrics
   for (const task of tasks) {
-    console.log(`  - Processing ${task.name}...`);
+    logger.info(`  - Processing ${task.name}...`);
 
     // Get or create task metrics
     if (!analytics.tasks[task.name]) {
@@ -199,20 +208,22 @@ async function buildDashboardData(): Promise<void> {
   analytics.lastUpdated = new Date().toISOString();
 
   // Write enhanced analytics
-  console.log('💾 Writing enhanced analytics...');
+  logger.info('💾 Writing enhanced analytics...');
   await fs.mkdir(path.dirname(ANALYTICS_PATH), { recursive: true });
   await fs.writeFile(ANALYTICS_PATH, JSON.stringify(analytics, null, 2), 'utf-8');
 
-  console.log('✅ Dashboard data built successfully!');
-  console.log(`   Analytics: ${ANALYTICS_PATH}`);
-  console.log(`   Tasks: ${Object.keys(analytics.tasks).length}`);
-  console.log(`   Total runs: ${analytics.totalRuns}`);
+  logger.info('✅ Dashboard data built successfully!');
+  logger.info(`   Analytics: ${ANALYTICS_PATH}`);
+  logger.info(`   Tasks: ${Object.keys(analytics.tasks).length}`);
+  logger.info(`   Total runs: ${analytics.totalRuns}`);
 }
 
 // Run if executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   buildDashboardData().catch((error) => {
-    console.error('❌ Failed to build dashboard data:', error);
+    logger.error(
+      `❌ Failed to build dashboard data: ${error instanceof Error ? error.message : String(error)}`
+    );
     process.exit(1);
   });
 }

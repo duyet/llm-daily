@@ -421,11 +421,11 @@ Add persistent context here.
  * Show next steps to the user
  */
 function showNextSteps(taskName: string): void {
-  console.log('');
+  logger.info('');
   logger.info('Next steps:');
-  console.log(`  1. Edit tasks/${taskName}/prompt.md to customize the prompt`);
-  console.log(`  2. Edit tasks/${taskName}/config.yaml to adjust settings`);
-  console.log(`  3. Run the task: npm run task:run ${taskName}`);
-  console.log(`  4. Generate workflow: npm run task:generate`);
-  console.log('');
+  logger.info(`  1. Edit tasks/${taskName}/prompt.md to customize the prompt`);
+  logger.info(`  2. Edit tasks/${taskName}/config.yaml to adjust settings`);
+  logger.info(`  3. Run the task: npm run task:run ${taskName}`);
+  logger.info(`  4. Generate workflow: npm run task:generate`);
+  logger.info('');
 }

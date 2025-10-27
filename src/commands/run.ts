@@ -105,7 +105,7 @@ async function loadEnvironment(envFile?: string): Promise<void> {
  * Display task execution results
  */
 function displayResults(taskName: string, result: TaskRunResult, options: RunCommandOptions): void {
-  console.log(''); // Empty line for spacing
+  logger.info(''); // Empty line for spacing
 
   if (result.skipped) {
     logger.info(`Task "${taskName}" was skipped`);
@@ -117,36 +117,36 @@ function displayResults(taskName: string, result: TaskRunResult, options: RunCom
 
   // Success header
   logger.success(`Task "${taskName}" completed successfully`);
-  console.log(''); // Empty line
+  logger.info(''); // Empty line
 
   // Provider and model info
   if (result.response) {
-    console.log(`Model: ${result.response.model}`);
+    logger.info(`Model: ${result.response.model}`);
   }
 
   // Metrics
   if (result.tokensUsed !== undefined) {
-    console.log(`Tokens: ${result.tokensUsed.toLocaleString()}`);
+    logger.info(`Tokens: ${result.tokensUsed.toLocaleString()}`);
   }
 
   if (result.cost !== undefined) {
-    console.log(`Cost: $${result.cost.toFixed(4)}`);
+    logger.info(`Cost: $${result.cost.toFixed(4)}`);
   }
 
   if (result.executionTime !== undefined) {
     const seconds = (result.executionTime / 1000).toFixed(2);
-    console.log(`Execution Time: ${seconds}s`);
+    logger.info(`Execution Time: ${seconds}s`);
   }
 
-  console.log(''); // Empty line
+  logger.info(''); // Empty line
 
   // Outputs
   if (result.outputsCreated && result.outputsCreated.length > 0) {
     logger.info('Outputs created:');
     for (const output of result.outputsCreated) {
-      console.log(`  - ${output}`);
+      logger.info(`  - ${output}`);
     }
-    console.log(''); // Empty line
+    logger.info(''); // Empty line
   }
 
   // Memory update
@@ -158,10 +158,10 @@ function displayResults(taskName: string, result: TaskRunResult, options: RunCom
 
   // Response content (if verbose)
   if (options.verbose && result.response) {
-    console.log(''); // Empty line
+    logger.info(''); // Empty line
     logger.info('Response:');
-    console.log('---');
-    console.log(result.response.content);
-    console.log('---');
+    logger.info('---');
+    logger.info(result.response.content);
+    logger.info('---');
   }
 }

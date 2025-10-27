@@ -89,6 +89,7 @@ export class Logger {
       const colored = this.config.colors
         ? `${colors.green}✓${colors.reset} ${message}`
         : `✓ ${message}`;
+      // eslint-disable-next-line no-console
       console.log(colored, ...args);
     }
   }
@@ -128,12 +129,15 @@ export class Logger {
     // Use appropriate console method
     switch (level) {
       case 'error':
+        // eslint-disable-next-line no-console
         console.error(formatted, ...args);
         break;
       case 'warn':
+        // eslint-disable-next-line no-console
         console.warn(formatted, ...args);
         break;
       default:
+        // eslint-disable-next-line no-console
         console.log(formatted, ...args);
     }
   }
