@@ -11,6 +11,7 @@ import { createMemoryManager } from './memory.js';
 import { replaceTemplateVariables } from '../utils/template.js';
 import { shouldRunTask } from './memory/deduplication.js';
 import { validateTaskConfig } from '../utils/config-validator.js';
+import { validatePromptLength, validateOutputConfig } from '../utils/validation.js';
 import type { ProviderResponse } from '../types/provider.types.js';
 
 /**
@@ -154,6 +155,12 @@ export class TaskRunner {
       });
       const prompt = templateResult.content;
 
+      // 4.5. Validate prompt length
+      const promptValidation = validatePromptLength(prompt);
+      if (!promptValidation.valid) {
+        throw new TaskRunnerError(promptValidation.error!);
+      }
+
       // If dry run, return here
       if (options.dryRun) {
         return {
@@ -241,6 +248,17 @@ export class TaskRunner {
       if (!validation.success) {
         const errorMsg = validation.errors.map((e) => `${e.path}: ${e.message}`).join(', ');
         throw new TaskRunnerError(`Invalid config: ${errorMsg}`);
+      }
+
+      // Validate outputs
+      if (config.outputs) {
+        const outputValidation = validateOutputConfig(config.outputs);
+        if (!outputValidation.valid) {
+          throw new TaskRunnerError(`Invalid output configuration: ${outputValidation.error}`);
+        }
+        if (outputValidation.warnings) {
+          console.warn('Output configuration warnings:', outputValidation.warnings.join('; '));
+        }
       }
 
       // Apply defaults
