@@ -13,6 +13,7 @@ import {
   ProviderCapabilities,
 } from '../../types/provider.types.js';
 import { validateProviderConfig } from '../../utils/validation.js';
+import { TIMEOUTS, RETRY, TOKEN_ESTIMATION } from '../../constants.js';
 
 /**
  * Abstract base class for all LLM providers
@@ -28,7 +29,7 @@ export abstract class BaseProvider {
   protected readonly config: ProviderConfig;
 
   /** Default timeout in milliseconds */
-  protected readonly timeout: number = 30000;
+  protected readonly timeout: number = TIMEOUTS.PROVIDER_DEFAULT;
 
   /**
    * Constructor
@@ -121,12 +122,12 @@ export abstract class BaseProvider {
    * @returns Total cost in USD
    */
   protected calculateCost(usage: TokenUsage, pricing: ModelPricing): number {
-    const inputCost = (usage.promptTokens / 1000) * pricing.input;
-    const outputCost = (usage.completionTokens / 1000) * pricing.output;
+    const inputCost = (usage.promptTokens / TOKEN_ESTIMATION.COST_DIVISOR) * pricing.input;
+    const outputCost = (usage.completionTokens / TOKEN_ESTIMATION.COST_DIVISOR) * pricing.output;
 
     let cachedCost = 0;
     if (usage.cachedTokens && pricing.cachedInput) {
-      cachedCost = (usage.cachedTokens / 1000) * pricing.cachedInput;
+      cachedCost = (usage.cachedTokens / TOKEN_ESTIMATION.COST_DIVISOR) * pricing.cachedInput;
     }
 
     return inputCost + outputCost + cachedCost;
@@ -196,7 +197,8 @@ export abstract class BaseProvider {
   }
 
   /**
-   * Retry logic with exponential backoff
+   * Retry logic with exponential backoff and jitter
+   * Prevents thundering herd problem by adding randomness to retry delays
    * @param fn Function to retry
    * @param maxAttempts Maximum retry attempts
    * @param initialDelay Initial delay in ms
@@ -204,8 +206,8 @@ export abstract class BaseProvider {
    */
   protected async retry<T>(
     fn: () => Promise<T>,
-    maxAttempts: number = 3,
-    initialDelay: number = 1000
+    maxAttempts: number = RETRY.MAX_ATTEMPTS,
+    initialDelay: number = RETRY.INITIAL_DELAY
   ): Promise<T> {
     let lastError: Error | undefined;
 
@@ -227,8 +229,12 @@ export abstract class BaseProvider {
           throw providerError;
         }
 
-        // Calculate delay with exponential backoff
-        const delay = initialDelay * Math.pow(2, attempt);
+        // Calculate delay with exponential backoff and jitter
+        // Jitter prevents thundering herd when many clients retry simultaneously
+        const baseDelay = initialDelay * Math.pow(2, attempt);
+        const jitter = baseDelay * RETRY.JITTER_FACTOR * (Math.random() - 0.5) * 2;
+        const delay = Math.min(baseDelay + jitter, RETRY.MAX_DELAY);
+
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }

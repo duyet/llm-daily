@@ -3,6 +3,14 @@
  * Prevents invalid inputs from causing runtime errors
  */
 
+import {
+  MEMORY_LIMITS,
+  PROVIDER_LIMITS,
+  TASK_LIMITS,
+  TIMEOUTS,
+  TOKEN_ESTIMATION,
+} from '../constants.js';
+
 /**
  * Validation result
  */
@@ -13,37 +21,10 @@ export interface ValidationResult {
 }
 
 /**
- * Memory content limits
+ * Re-export constants for backward compatibility
+ * @deprecated Import from '../constants.js' instead
  */
-export const MEMORY_LIMITS = {
-  MAX_BODY_LENGTH: 1_000_000, // 1MB of text
-  MAX_METADATA_KEYS: 50,
-  MAX_METADATA_VALUE_LENGTH: 10_000,
-  MIN_SIMILARITY_THRESHOLD: 0.0,
-  MAX_SIMILARITY_THRESHOLD: 1.0,
-} as const;
-
-/**
- * Provider limits
- */
-export const PROVIDER_LIMITS = {
-  MIN_TEMPERATURE: 0.0,
-  MAX_TEMPERATURE: 2.0,
-  MIN_MAX_TOKENS: 1,
-  MAX_MAX_TOKENS: 200_000,
-  MIN_TIMEOUT: 1000, // 1 second
-  MAX_TIMEOUT: 300_000, // 5 minutes
-  MAX_PROMPT_LENGTH: 500_000, // ~500KB
-} as const;
-
-/**
- * Task configuration limits
- */
-export const TASK_LIMITS = {
-  MAX_OUTPUT_PATH_LENGTH: 255,
-  MAX_OUTPUTS: 10,
-  MAX_TASK_NAME_LENGTH: 100,
-} as const;
+export { MEMORY_LIMITS, PROVIDER_LIMITS, TASK_LIMITS };
 
 /**
  * Validate memory content length
@@ -136,10 +117,10 @@ export function validateMaxTokens(maxTokens: number): ValidationResult {
  * Validate timeout value
  */
 export function validateTimeout(timeout: number): ValidationResult {
-  if (timeout < PROVIDER_LIMITS.MIN_TIMEOUT || timeout > PROVIDER_LIMITS.MAX_TIMEOUT) {
+  if (timeout < TIMEOUTS.MIN || timeout > TIMEOUTS.MAX) {
     return {
       valid: false,
-      error: `Timeout must be between ${PROVIDER_LIMITS.MIN_TIMEOUT}ms and ${PROVIDER_LIMITS.MAX_TIMEOUT}ms (got ${timeout}ms)`,
+      error: `Timeout must be between ${TIMEOUTS.MIN}ms and ${TIMEOUTS.MAX}ms (got ${timeout}ms)`,
     };
   }
 
@@ -252,7 +233,7 @@ export function validateContextWindow(
   maxContextTokens: number
 ): ValidationResult {
   // Rough estimate: 1 token ≈ 4 characters
-  const estimatedPromptTokens = Math.ceil(promptLength / 4);
+  const estimatedPromptTokens = Math.ceil(promptLength / TOKEN_ESTIMATION.CHARS_PER_TOKEN);
   const totalEstimatedTokens = estimatedPromptTokens + maxTokens;
 
   const warnings: string[] = [];

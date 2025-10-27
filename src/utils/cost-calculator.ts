@@ -2,6 +2,8 @@
  * Cost calculator for LLM providers
  */
 
+import { TOKEN_ESTIMATION } from '../constants.js';
+
 interface ModelPricing {
   /** Cost per 1M input tokens in USD */
   input: number;
@@ -104,7 +106,7 @@ export function listAvailableModels(): Array<{ model: string; pricing: ModelPric
  */
 export function formatCost(cost: number): string {
   if (cost < 0.01) {
-    return `$${(cost * 1000).toFixed(2)}m`; // Show in milli-dollars
+    return `$${(cost * TOKEN_ESTIMATION.MILLI_DOLLAR_DIVISOR).toFixed(2)}m`; // Show in milli-dollars
   }
   return `$${cost.toFixed(2)}`;
 }

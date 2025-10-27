@@ -2,6 +2,7 @@
  * Webhook output integration - sends results to HTTP endpoints
  */
 
+import { TIMEOUTS, RETRY } from '../../constants.js';
 import type {
   OutputIntegration,
   TaskResult,
@@ -14,8 +15,8 @@ export class WebhookOutput implements OutputIntegration {
   constructor(private config: WebhookOutputConfig) {}
 
   async execute(result: TaskResult): Promise<void> {
-    const maxRetries = this.config.retries ?? 3;
-    const timeout = this.config.timeout ?? 10000;
+    const maxRetries = this.config.retries ?? RETRY.MAX_ATTEMPTS;
+    const timeout = this.config.timeout ?? TIMEOUTS.WEBHOOK_DEFAULT;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -31,8 +32,11 @@ export class WebhookOutput implements OutputIntegration {
           );
         }
 
-        // Exponential backoff
-        await this.sleep(Math.min(1000 * 2 ** (attempt - 1), 10000));
+        // Exponential backoff with jitter to prevent thundering herd
+        const baseDelay = RETRY.INITIAL_DELAY * 2 ** (attempt - 1);
+        const jitter = baseDelay * RETRY.JITTER_FACTOR * (Math.random() - 0.5) * 2;
+        const delay = Math.min(baseDelay + jitter, RETRY.MAX_DELAY);
+        await this.sleep(delay);
       }
     }
   }

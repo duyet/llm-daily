@@ -3,6 +3,7 @@
  * Supports time-based, content-based, and hybrid strategies
  */
 
+import { TIME } from '../../constants.js';
 import { MemoryContent, MemoryMetadata } from '../../types/memory.types.js';
 import { createProvider } from '../providers/registry.js';
 import { BaseProvider } from '../providers/base.js';
@@ -112,7 +113,7 @@ function timeBasedDeduplication(options: DeduplicationOptions): DeduplicationRes
   // Calculate time since last run
   const lastRunTime = new Date(lastRun).getTime();
   const now = Date.now();
-  const hoursSinceLastRun = (now - lastRunTime) / (1000 * 60 * 60);
+  const hoursSinceLastRun = (now - lastRunTime) / TIME.MS_PER_HOUR;
 
   if (hoursSinceLastRun < minHours) {
     return {
@@ -304,7 +305,7 @@ export function getDeduplicationSummary(metadata: MemoryMetadata): {
   if (metadata.lastRun) {
     const lastRunTime = new Date(metadata.lastRun).getTime();
     const now = Date.now();
-    hoursSinceLastRun = (now - lastRunTime) / (1000 * 60 * 60);
+    hoursSinceLastRun = (now - lastRunTime) / TIME.MS_PER_HOUR;
   }
 
   return {
@@ -327,7 +328,7 @@ export function hasMinimumTimePassed(lastRun: string | undefined, minHours: numb
 
   const lastRunTime = new Date(lastRun).getTime();
   const now = Date.now();
-  const hoursSinceLastRun = (now - lastRunTime) / (1000 * 60 * 60);
+  const hoursSinceLastRun = (now - lastRunTime) / TIME.MS_PER_HOUR;
 
   return hoursSinceLastRun >= minHours;
 }
