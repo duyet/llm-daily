@@ -30,6 +30,8 @@
   },
   "scripts": {
     "build": "tsc",
+    "build:all": "npm run build && npm run build:dashboard",
+    "build:dashboard": "cd dashboard && tsc",
     "dev": "tsc --watch",
     "test": "vitest",
     "test:ui": "vitest --ui",

@@ -1,0 +1,167 @@
+// Toast Notification System
+// Provides user feedback for actions, errors, and information
+
+type ToastType = 'info' | 'success' | 'warning' | 'error';
+
+/**
+ * Show toast notification
+ * @param message - Message to display
+ * @param type - Type: 'info', 'success', 'warning', 'error'
+ * @param duration - Duration in milliseconds (default: 5000)
+ * @returns The toast element
+ */
+function showToast(message: string, type: ToastType = 'info', duration = 5000): HTMLElement {
+  // Ensure toast container exists
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'fixed top-4 right-4 z-50 space-y-2 pointer-events-none';
+    container.style.maxWidth = '400px';
+    document.body.appendChild(container);
+  }
+
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = `
+    bg-white dark:bg-gray-800 border-l-4 p-4 rounded-lg shadow-xl
+    pointer-events-auto
+    transform transition-all duration-300 translate-x-0 opacity-100
+    ${getToastBorderColor(type)}
+  `;
+
+  // Add content
+  toast.innerHTML = `
+    <div class="flex items-start gap-3">
+      <span class="flex-shrink-0">${getToastIcon(type)}</span>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">${escapeHtml(message)}</p>
+      </div>
+      <button
+        onclick="this.closest('[role=alert]').remove()"
+        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors flex-shrink-0"
+        aria-label="Close notification"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  `;
+
+  toast.setAttribute('role', 'alert');
+  toast.setAttribute('aria-live', 'polite');
+
+  // Add to container with slide-in animation
+  container.appendChild(toast);
+
+  // Animate in
+  requestAnimationFrame(() => {
+    toast.style.transform = 'translateX(0)';
+    toast.style.opacity = '1';
+  });
+
+  // Auto-remove after duration
+  if (duration > 0) {
+    setTimeout(() => {
+      removeToast(toast);
+    }, duration);
+  }
+
+  // Limit number of toasts (max 5)
+  const toasts = container.querySelectorAll('[role=alert]');
+  if (toasts.length > 5) {
+    removeToast(toasts[0] as HTMLElement);
+  }
+
+  console.log(`[Toast] ${type.toUpperCase()}: ${message}`);
+
+  return toast;
+}
+
+/**
+ * Remove toast with animation
+ * @param toast - Toast element to remove
+ */
+function removeToast(toast: HTMLElement): void {
+  if (!toast || !toast.parentElement) return;
+
+  // Animate out
+  toast.style.transform = 'translateX(400px)';
+  toast.style.opacity = '0';
+
+  // Remove after animation
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.remove();
+    }
+  }, 300);
+}
+
+/**
+ * Get border color class for toast type
+ */
+function getToastBorderColor(type: ToastType): string {
+  switch (type) {
+    case 'success':
+      return 'border-green-500';
+    case 'error':
+      return 'border-red-500';
+    case 'warning':
+      return 'border-yellow-500';
+    case 'info':
+    default:
+      return 'border-blue-500';
+  }
+}
+
+/**
+ * Get SVG icon for toast type
+ */
+function getToastIcon(type: ToastType): string {
+  switch (type) {
+    case 'success':
+      return '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+    case 'error':
+      return '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+    case 'warning':
+      return '<svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>';
+    case 'info':
+    default:
+      return '<svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+  }
+}
+
+/**
+ * Helper: Escape HTML to prevent XSS
+ */
+function escapeHtml(text: string): string {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
+ * Convenience methods for specific toast types
+ */
+const Toast = {
+  info: (message: string, duration?: number) => showToast(message, 'info', duration),
+  success: (message: string, duration?: number) => showToast(message, 'success', duration),
+  warning: (message: string, duration?: number) => showToast(message, 'warning', duration),
+  error: (message: string, duration?: number) => showToast(message, 'error', duration),
+};
+
+// Declare global functions
+declare global {
+  interface Window {
+    showToast: typeof showToast;
+    Toast: typeof Toast;
+  }
+}
+
+// Make functions globally available
+window.showToast = showToast;
+window.Toast = Toast;
+
+// Export to make this a module
+export {};
