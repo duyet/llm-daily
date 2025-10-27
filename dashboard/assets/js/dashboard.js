@@ -90,49 +90,62 @@ function renderResultsTab(analytics) {
     return;
   }
 
-  // Generate result cards with Tailwind classes
+  // Generate result cards with Tailwind classes and SVG icons
   container.innerHTML = tasks.map(task => {
     const statusClass = task.successRate >= 0.95 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
                        task.successRate >= 0.8 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
                        'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-    const statusIcon = task.successRate >= 0.95 ? '✓' :
-                      task.successRate >= 0.8 ? '⚠' : '✗';
+    const statusIcon = task.successRate >= 0.95 ?
+      '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' :
+      task.successRate >= 0.8 ?
+      '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>' :
+      '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
 
     const timeAgo = task.lastRun ? formatTimeAgo(new Date(task.lastRun)) : 'Never';
-
-    // Get result preview (placeholder for now - will be populated by builder)
     const resultPreview = task.latestResult?.preview || 'Result data will be available after the next run';
 
     return `
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 transition-all hover:shadow-lg hover:-translate-y-1 hover:border-purple-lighter shadow-sm" data-task="${task.name}">
-        <div class="flex justify-between items-start mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">${formatTaskName(task.name)}</h3>
+      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-all hover:shadow-md hover:border-purple-lighter shadow-sm" data-task="${task.name}">
+        <div class="flex justify-between items-start mb-3">
+          <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">${formatTaskName(task.name)}</h3>
           <div class="status-badge">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusClass}">
-              ${statusIcon} ${(task.successRate * 100).toFixed(0)}% Success
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${statusClass}">
+              ${statusIcon}
+              ${(task.successRate * 100).toFixed(0)}%
             </span>
           </div>
         </div>
 
-        <div class="flex gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
-          <span class="flex items-center gap-1">🕐 ${timeAgo}</span>
-          <span class="flex items-center gap-1">📊 ${formatNumber(task.tokens)} tokens</span>
-          <span class="flex items-center gap-1">💰 $${task.cost.toFixed(3)}</span>
+        <div class="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
+          <span class="flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            ${timeAgo}
+          </span>
+          <span class="flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+            ${formatNumber(task.tokens)}
+          </span>
+          <span class="flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            $${task.cost.toFixed(3)}
+          </span>
         </div>
 
-        <div class="bg-beige dark:bg-gray-700 rounded-lg p-4 mb-4">
-          <h4 class="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Latest Result:</h4>
-          <p class="text-sm leading-relaxed text-gray-900 dark:text-gray-100 max-h-20 overflow-hidden relative whitespace-pre-wrap result-preview-gradient">${escapeHtml(resultPreview)}</p>
+        <div class="bg-beige dark:bg-gray-700 rounded-md p-3 mb-3">
+          <h4 class="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1.5">Latest Result:</h4>
+          <p class="text-xs leading-relaxed text-gray-900 dark:text-gray-100 max-h-16 overflow-hidden relative whitespace-pre-wrap result-preview-gradient">${escapeHtml(resultPreview)}</p>
         </div>
 
-        <div class="workflow-link mb-3 text-center"></div>
+        <div class="workflow-link mb-2 text-center text-xs"></div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <button class="px-4 py-2.5 text-sm font-medium text-purple border border-purple rounded-lg transition-all hover:bg-purple hover:text-white" onclick="viewFullResult('${task.name}')">
-            📄 View Result
+        <div class="grid grid-cols-2 gap-2">
+          <button class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple border border-purple rounded-md transition-colors hover:bg-purple hover:text-white" onclick="viewFullResult('${task.name}')">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+            View
           </button>
-          <button class="run-now-btn px-4 py-2.5 text-sm font-medium text-white bg-purple rounded-lg transition-all hover:bg-purple-light" onclick="triggerJob('${task.name}')">
-            ▶️ Run Now
+          <button class="run-now-btn flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-purple rounded-md transition-colors hover:bg-purple-light" onclick="triggerJob('${task.name}')">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            Run
           </button>
         </div>
       </div>
@@ -152,8 +165,14 @@ function renderConfigTab(analytics) {
   if (tasks.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-tertiary);">
-          No tasks configured yet
+        <td colspan="7" class="text-center py-12 text-gray-500 dark:text-gray-400">
+          <div class="flex flex-col items-center">
+            <svg class="w-10 h-10 mb-2 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p class="text-xs">No tasks configured yet</p>
+          </div>
         </td>
       </tr>
     `;
@@ -172,13 +191,18 @@ function renderConfigTab(analytics) {
 
     return `
       <tr class="cursor-pointer transition-colors hover:bg-beige dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700 last:border-b-0" onclick="viewTaskDetails('${task.name}')">
-        <td class="px-4 py-4"><span class="font-semibold text-gray-900 dark:text-gray-100">${formatTaskName(task.name)}</span></td>
-        <td class="px-4 py-4 text-gray-700 dark:text-gray-300">${schedule}</td>
-        <td class="px-4 py-4"><span class="inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${statusClass}">${statusText}</span></td>
-        <td class="px-4 py-4 text-gray-700 dark:text-gray-300">${timeAgo}</td>
-        <td class="px-4 py-4 text-gray-700 dark:text-gray-300">${formatNumber(task.tokens)}</td>
-        <td class="px-4 py-4 text-gray-700 dark:text-gray-300">$${task.cost.toFixed(3)}</td>
-        <td class="px-4 py-4"><button class="px-3 py-1.5 text-xs font-medium text-purple border border-purple rounded-md transition-all hover:bg-purple hover:text-white" onclick="event.stopPropagation(); viewTaskDetails('${task.name}')">View</button></td>
+        <td class="px-3 py-2.5"><span class="font-semibold text-gray-900 dark:text-gray-100 text-xs">${formatTaskName(task.name)}</span></td>
+        <td class="px-3 py-2.5 text-gray-600 dark:text-gray-400 text-xs">${schedule}</td>
+        <td class="px-3 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${statusClass}">${statusText}</span></td>
+        <td class="px-3 py-2.5 text-gray-600 dark:text-gray-400 text-xs">${timeAgo}</td>
+        <td class="px-3 py-2.5 text-gray-600 dark:text-gray-400 text-xs">${formatNumber(task.tokens)}</td>
+        <td class="px-3 py-2.5 text-gray-600 dark:text-gray-400 text-xs">$${task.cost.toFixed(3)}</td>
+        <td class="px-3 py-2.5">
+          <button class="flex items-center gap-1 px-2 py-1 text-xs font-medium text-purple border border-purple rounded-md transition-colors hover:bg-purple hover:text-white" onclick="event.stopPropagation(); viewTaskDetails('${task.name}')">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+            View
+          </button>
+        </td>
       </tr>
     `;
   }).join('');
@@ -500,14 +524,17 @@ function closeSettingsModal() {
 
 function toggleTokenVisibility() {
   const input = document.getElementById('github-token-input');
-  const icon = document.getElementById('token-toggle-icon');
+  const showIcon = document.getElementById('token-toggle-icon-show');
+  const hideIcon = document.getElementById('token-toggle-icon-hide');
 
   if (input.type === 'password') {
     input.type = 'text';
-    icon.textContent = '🙈';
+    showIcon.classList.add('hidden');
+    hideIcon.classList.remove('hidden');
   } else {
     input.type = 'password';
-    icon.textContent = '👁️';
+    showIcon.classList.remove('hidden');
+    hideIcon.classList.add('hidden');
   }
 }
 
@@ -571,7 +598,7 @@ async function triggerJob(taskName) {
     const button = document.querySelector(`[data-task="${taskName}"] .run-now-btn`);
     if (button) {
       button.disabled = true;
-      button.innerHTML = '⏳ Triggering...';
+      button.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Triggering...';
     }
 
     // Trigger workflow
@@ -586,7 +613,7 @@ async function triggerJob(taskName) {
     // Update button state
     if (button) {
       button.disabled = false;
-      button.innerHTML = '▶️ Run Now';
+      button.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Run';
     }
 
     // Refresh analytics after a short delay
@@ -602,7 +629,7 @@ async function triggerJob(taskName) {
     const button = document.querySelector(`[data-task="${taskName}"] .run-now-btn`);
     if (button) {
       button.disabled = false;
-      button.innerHTML = '▶️ Run Now';
+      button.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Run';
     }
   }
 }
@@ -667,16 +694,16 @@ function updateTaskStatus(taskName, status, conclusion, run) {
   const card = document.querySelector(`[data-task="${taskName}"]`);
   if (!card) return;
 
-  // Update status badge
+  // Update status badge with SVG icons
   let statusHTML = '';
   if (status === 'queued') {
-    statusHTML = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">⏳ Queued</span>';
+    statusHTML = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Queued</span>';
   } else if (status === 'in_progress') {
-    statusHTML = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">🔄 Running</span>';
+    statusHTML = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"><svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Running</span>';
   } else if (status === 'completed' && conclusion === 'success') {
-    statusHTML = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">✅ Success</span>';
+    statusHTML = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Success</span>';
   } else if (status === 'completed' && conclusion === 'failure') {
-    statusHTML = '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">❌ Failed</span>';
+    statusHTML = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Failed</span>';
   }
 
   const statusBadge = card.querySelector('.status-badge');
@@ -684,9 +711,9 @@ function updateTaskStatus(taskName, status, conclusion, run) {
     statusBadge.innerHTML = statusHTML;
   }
 
-  // Add link to workflow run
+  // Add link to workflow run with SVG icon
   if (run && run.html_url) {
-    const linkHTML = `<a href="${run.html_url}" target="_blank" class="text-xs text-purple hover:underline">View on GitHub →</a>`;
+    const linkHTML = `<a href="${run.html_url}" target="_blank" class="inline-flex items-center gap-0.5 text-xs text-purple hover:underline">View on GitHub<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg></a>`;
     const linkContainer = card.querySelector('.workflow-link');
     if (linkContainer) {
       linkContainer.innerHTML = linkHTML;
