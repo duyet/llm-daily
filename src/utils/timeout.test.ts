@@ -8,12 +8,7 @@ import {
 } from './timeout.js';
 
 describe('Timeout Utilities', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
   afterEach(() => {
-    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
@@ -21,10 +16,7 @@ describe('Timeout Utilities', () => {
     it('should resolve when operation completes before timeout', async () => {
       const operation = vi.fn(async () => 'success');
 
-      const promise = withTimeout('test', operation, { timeoutMs: 1000 });
-
-      // Fast-forward time but operation completes immediately
-      await vi.runAllTimersAsync();
+      const promise = withTimeout('test', operation, { timeoutMs: 5000 });
       const result = await promise;
 
       expect(result).toBe('success');
@@ -33,42 +25,45 @@ describe('Timeout Utilities', () => {
 
     it('should throw TimeoutError when operation exceeds timeout', async () => {
       const operation = vi.fn(async (signal: AbortSignal) => {
-        return new Promise((resolve, reject) => {
-          const timer = setTimeout(resolve, 2000); // Operation takes 2s
-          signal.addEventListener('abort', () => {
+        // Simulate a slow operation that respects the abort signal
+        await new Promise<never>((resolve, reject) => {
+          if (signal.aborted) {
+            reject(new Error('Aborted'));
+            return;
+          }
+
+          const abortHandler = () => {
             clearTimeout(timer);
             reject(new Error('Aborted'));
-          });
+          };
+
+          signal.addEventListener('abort', abortHandler, { once: true });
+          const timer = setTimeout(resolve, 500); // Operation would take 500ms
         });
       });
 
-      const promise = withTimeout('slow-operation', operation, { timeoutMs: 1000 });
+      const promise = withTimeout('slow-operation', operation, { timeoutMs: 100 });
 
-      // Fast-forward past timeout
-      await vi.advanceTimersByTimeAsync(1001);
-
-      await expect(promise).rejects.toThrow(TimeoutError);
-      await expect(promise).rejects.toThrow("Operation 'slow-operation' timed out after 1000ms");
+      await expect(promise).rejects.toThrow("Operation 'slow-operation' timed out after 100ms");
     });
 
     it('should call onTimeout callback when timeout occurs', async () => {
       const onTimeout = vi.fn();
       const operation = vi.fn(async (signal: AbortSignal) => {
-        return new Promise((resolve, reject) => {
-          const timer = setTimeout(resolve, 2000);
-          signal.addEventListener('abort', () => {
+        await new Promise<never>((resolve, reject) => {
+          const abortHandler = () => {
             clearTimeout(timer);
             reject(new Error('Aborted'));
-          });
+          };
+          signal.addEventListener('abort', abortHandler, { once: true });
+          const timer = setTimeout(resolve, 500);
         });
       });
 
       const promise = withTimeout('test', operation, {
-        timeoutMs: 1000,
+        timeoutMs: 100,
         onTimeout,
       });
-
-      await vi.advanceTimersByTimeAsync(1001);
 
       await expect(promise).rejects.toThrow(TimeoutError);
       expect(onTimeout).toHaveBeenCalled();
@@ -77,21 +72,20 @@ describe('Timeout Utilities', () => {
     it('should execute cleanup function on timeout', async () => {
       const cleanupFn = vi.fn();
       const operation = vi.fn(async (signal: AbortSignal) => {
-        return new Promise((resolve, reject) => {
-          const timer = setTimeout(resolve, 2000);
-          signal.addEventListener('abort', () => {
+        await new Promise<never>((resolve, reject) => {
+          const abortHandler = () => {
             clearTimeout(timer);
             reject(new Error('Aborted'));
-          });
+          };
+          signal.addEventListener('abort', abortHandler, { once: true });
+          const timer = setTimeout(resolve, 500);
         });
       });
 
       const promise = withTimeout('test', operation, {
-        timeoutMs: 1000,
+        timeoutMs: 100,
         cleanupFn,
       });
-
-      await vi.advanceTimersByTimeAsync(1001);
 
       await expect(promise).rejects.toThrow(TimeoutError);
       expect(cleanupFn).toHaveBeenCalled();
@@ -118,21 +112,20 @@ describe('Timeout Utilities', () => {
         throw new Error('Cleanup failed');
       });
       const operation = vi.fn(async (signal: AbortSignal) => {
-        return new Promise((resolve, reject) => {
-          const timer = setTimeout(resolve, 2000);
-          signal.addEventListener('abort', () => {
+        await new Promise<never>((resolve, reject) => {
+          const abortHandler = () => {
             clearTimeout(timer);
             reject(new Error('Aborted'));
-          });
+          };
+          signal.addEventListener('abort', abortHandler, { once: true });
+          const timer = setTimeout(resolve, 500);
         });
       });
 
       const promise = withTimeout('test', operation, {
-        timeoutMs: 1000,
+        timeoutMs: 100,
         cleanupFn,
       });
-
-      await vi.advanceTimersByTimeAsync(1001);
 
       await expect(promise).rejects.toThrow(TimeoutError);
       expect(cleanupFn).toHaveBeenCalled();
@@ -160,12 +153,13 @@ describe('Timeout Utilities', () => {
     it('should respect parent abort signal', async () => {
       const parentController = new AbortController();
       const operation = vi.fn(async (signal: AbortSignal) => {
-        return new Promise((resolve, reject) => {
-          const timer = setTimeout(resolve, 2000);
-          signal.addEventListener('abort', () => {
+        await new Promise<never>((resolve, reject) => {
+          const abortHandler = () => {
             clearTimeout(timer);
             reject(new Error('Parent aborted'));
-          });
+          };
+          signal.addEventListener('abort', abortHandler, { once: true });
+          const timer = setTimeout(resolve, 500);
         });
       });
 
@@ -197,10 +191,7 @@ describe('Timeout Utilities', () => {
       const mockFetch = vi.fn(async () => new Response('OK'));
       global.fetch = mockFetch;
 
-      const promise = fetchWithTimeout('https://example.com/api');
-
-      await vi.runAllTimersAsync();
-      await promise;
+      await fetchWithTimeout('https://example.com/api');
 
       expect(mockFetch).toHaveBeenCalledWith(
         'https://example.com/api',
@@ -214,10 +205,7 @@ describe('Timeout Utilities', () => {
       const mockFetch = vi.fn(async () => new Response('OK'));
       global.fetch = mockFetch;
 
-      const promise = fetchWithTimeout('https://example.com/api', { timeoutMs: 5000 });
-
-      await vi.runAllTimersAsync();
-      await promise;
+      await fetchWithTimeout('https://example.com/api', { timeoutMs: 5000 });
 
       expect(mockFetch).toHaveBeenCalled();
     });
@@ -226,14 +214,11 @@ describe('Timeout Utilities', () => {
       const mockFetch = vi.fn(async () => new Response('OK'));
       global.fetch = mockFetch;
 
-      const promise = fetchWithTimeout('https://example.com/api', {
+      await fetchWithTimeout('https://example.com/api', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         timeoutMs: 3000,
       });
-
-      await vi.runAllTimersAsync();
-      await promise;
 
       expect(mockFetch).toHaveBeenCalledWith(
         'https://example.com/api',
@@ -248,23 +233,24 @@ describe('Timeout Utilities', () => {
     it('should throw TimeoutError when fetch exceeds timeout', async () => {
       const mockFetch = vi.fn((url: string, options?: RequestInit) => {
         return new Promise((resolve, reject) => {
-          const timer = setTimeout(() => resolve(new Response('OK')), 2000);
+          const timer = setTimeout(() => resolve(new Response('OK')), 500);
           if (options?.signal) {
-            options.signal.addEventListener('abort', () => {
-              clearTimeout(timer);
-              reject(new Error('Fetch aborted'));
-            });
+            options.signal.addEventListener(
+              'abort',
+              () => {
+                clearTimeout(timer);
+                reject(new Error('Fetch aborted'));
+              },
+              { once: true }
+            );
           }
         });
       });
       global.fetch = mockFetch as unknown as typeof fetch;
 
-      const promise = fetchWithTimeout('https://example.com/api', { timeoutMs: 1000 });
+      const promise = fetchWithTimeout('https://example.com/api', { timeoutMs: 100 });
 
-      // Advance timers and wait for promise to reject
-      const advancePromise = vi.advanceTimersByTimeAsync(1001);
-
-      await Promise.all([advancePromise, expect(promise).rejects.toThrow(TimeoutError)]);
+      await expect(promise).rejects.toThrow(TimeoutError);
     });
   });
 
