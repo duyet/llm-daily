@@ -6,6 +6,7 @@
 import OpenAI from 'openai';
 import { BaseProvider } from './base.js';
 import {
+  ProviderConfig,
   ProviderResponse,
   TokenUsage,
   ModelPricing,
@@ -126,7 +127,7 @@ export class OpenAIProvider extends BaseProvider {
   protected readonly providerName = 'openai';
   private client: OpenAI;
 
-  constructor(config: any) {
+  constructor(config: ProviderConfig) {
     super(config);
 
     const apiKey = this.getApiKey('OPENAI_API_KEY');
@@ -164,7 +165,10 @@ export class OpenAIProvider extends BaseProvider {
       // Check if caching was used (OpenAI returns this in usage metadata)
       const cached = this.detectCaching(response);
       if (cached && response.usage?.prompt_tokens_details) {
-        usage.cachedTokens = (response.usage.prompt_tokens_details as any).cached_tokens ?? 0;
+        const promptDetails = response.usage.prompt_tokens_details as {
+          cached_tokens?: number;
+        };
+        usage.cachedTokens = promptDetails.cached_tokens ?? 0;
       }
 
       return this.createResponse(content, usage, cached, {
@@ -241,7 +245,9 @@ export class OpenAIProvider extends BaseProvider {
     }
 
     // Check for cached tokens in prompt_tokens_details
-    const promptDetails = response.usage.prompt_tokens_details as any;
+    const promptDetails = response.usage.prompt_tokens_details as
+      | { cached_tokens?: number }
+      | undefined;
     return (promptDetails?.cached_tokens ?? 0) > 0;
   }
 

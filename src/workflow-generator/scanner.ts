@@ -105,9 +105,8 @@ async function scanTask(name: string, path: string, _showWarnings: boolean): Pro
     // Check if config.yaml exists
     const configContent = await fs.readFile(configPath, 'utf-8');
 
-    // Parse YAML
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-    const rawConfig: any = parseYaml(configContent);
+    // Parse YAML (returns unknown, validate with Zod)
+    const rawConfig: unknown = parseYaml(configContent);
 
     // Validate config schema
     const result = taskConfigSchema.safeParse(rawConfig);

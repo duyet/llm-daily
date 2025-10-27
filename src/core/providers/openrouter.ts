@@ -5,6 +5,7 @@
 
 import { BaseProvider } from './base.js';
 import {
+  ProviderConfig,
   ProviderResponse,
   TokenUsage,
   ModelPricing,
@@ -66,7 +67,7 @@ export class OpenRouterProvider extends BaseProvider {
   private readonly apiKey: string;
   private pricingCache: Map<string, ModelPricing> = new Map();
 
-  constructor(config: any) {
+  constructor(config: ProviderConfig) {
     super(config);
     this.apiKey = this.getApiKey('OPENROUTER_API_KEY');
   }
