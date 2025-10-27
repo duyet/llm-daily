@@ -33,21 +33,38 @@ function initTabs() {
 // Load and display dashboard data
 async function loadDashboard() {
   try {
-    // Load analytics data
-    const response = await fetch(`${basePath}/dashboard/data/analytics.json?t=${Date.now()}`);
-    if (!response.ok) {
-      throw new Error(`Failed to load analytics: ${response.status} ${response.statusText}`);
+    // Add timeout to prevent indefinite loading
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+    try {
+      // Load analytics data
+      const response = await fetch(`${basePath}/dashboard/data/analytics.json?t=${Date.now()}`, {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Failed to load analytics: ${response.status} ${response.statusText}`);
+      }
+
+      analyticsData = await response.json();
+      lastUpdated = new Date();
+
+      // Render components
+      renderResultsTab(analyticsData);
+      renderConfigTab(analyticsData);
+
+      // Update last updated display
+      updateLastUpdatedDisplay();
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        throw new Error('Request timeout - analytics data took too long to load');
+      }
+      throw fetchError;
     }
-
-    analyticsData = await response.json();
-    lastUpdated = new Date();
-
-    // Render components
-    renderResultsTab(analyticsData);
-    renderConfigTab(analyticsData);
-
-    // Update last updated display
-    updateLastUpdatedDisplay();
   } catch (error) {
     console.error('Error loading dashboard:', error);
     showError(error.message);
@@ -348,7 +365,9 @@ function showError(message) {
     <div class="col-span-full text-center py-16 text-red-600 dark:text-red-400">
       <h3 class="text-xl font-semibold mb-2">Error Loading Dashboard</h3>
       <p class="text-sm">${escapeHtml(message)}</p>
-      <p class="text-sm mt-4">Please check the console for more details.</p>
+      <button onclick="loadDashboard()" class="mt-6 px-6 py-2.5 text-sm font-medium text-white bg-purple rounded-lg transition-all hover:bg-purple-light">
+        🔄 Retry
+      </button>
     </div>
   `;
 }
@@ -433,12 +452,14 @@ function initKeyboardShortcuts() {
 }
 
 // Initialize Dashboard
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initTabs();
   initKeyboardShortcuts();
-  loadDashboard();
 
-  // Start auto-refresh (every 30 seconds)
+  // Load dashboard first before starting auto-refresh
+  await loadDashboard();
+
+  // Start auto-refresh only after initial load (every 30 seconds)
   startAutoRefresh(30);
 
   // Update "last updated" display every 10 seconds

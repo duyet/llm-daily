@@ -280,16 +280,33 @@ function renderEnhancedOverviewCards(analytics) {
  */
 async function loadEnhancedDashboard() {
   try {
-    // Load analytics data
-    const response = await fetch('/data/analytics.json');
-    if (!response.ok) throw new Error('Failed to load analytics');
+    // Add timeout to prevent indefinite loading
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-    const analytics = await response.json();
+    try {
+      // Load analytics data - use basePath for GitHub Pages compatibility
+      const response = await fetch(`${basePath}/dashboard/data/analytics.json?t=${Date.now()}`, {
+        signal: controller.signal
+      });
 
-    // Render enhanced components
-    renderEnhancedOverviewCards(analytics);
-    renderEnhancedTaskCards(analytics);
-    renderCharts(analytics);
+      clearTimeout(timeoutId);
+
+      if (!response.ok) throw new Error('Failed to load analytics');
+
+      const analytics = await response.json();
+
+      // Render enhanced components
+      renderEnhancedOverviewCards(analytics);
+      renderEnhancedTaskCards(analytics);
+      renderCharts(analytics);
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        throw new Error('Request timeout - analytics data took too long to load');
+      }
+      throw fetchError;
+    }
   } catch (error) {
     console.error('Error loading dashboard:', error);
     showError('Failed to load analytics data');
