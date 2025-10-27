@@ -12,8 +12,8 @@ import {
 } from '../types/analytics.types.js';
 import { calculateCost } from '../utils/cost-calculator.js';
 
-const ANALYTICS_PATH = 'docs/data/analytics.json';
-const HISTORY_DIR = 'docs/data/history';
+const ANALYTICS_PATH = 'dashboard/data/analytics.json';
+const HISTORY_DIR = 'dashboard/data/history';
 
 /**
  * Analytics manager singleton
@@ -27,7 +27,7 @@ class AnalyticsManager {
   async initialize(): Promise<void> {
     try {
       const data = await fs.readFile(ANALYTICS_PATH, 'utf-8');
-      this.analytics = JSON.parse(data);
+      this.analytics = JSON.parse(data) as Analytics;
     } catch {
       // Initialize new analytics
       this.analytics = {
@@ -139,6 +139,24 @@ class AnalyticsManager {
       model,
       error,
     });
+
+    // Rebuild dashboard data (async, don't wait)
+    this.rebuildDashboardData().catch(() => {
+      // Silently fail - dashboard rebuilding is not critical
+    });
+  }
+
+  /**
+   * Rebuild dashboard data with enhanced metrics
+   */
+  private async rebuildDashboardData(): Promise<void> {
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { buildDashboardData } = await import('../scripts/build-dashboard-data.js');
+      await buildDashboardData();
+    } catch {
+      // Silently fail if dashboard builder is not available
+    }
   }
 
   /**
@@ -189,7 +207,7 @@ class AnalyticsManager {
 
     try {
       const data = await fs.readFile(historyFile, 'utf-8');
-      historicalData = JSON.parse(data);
+      historicalData = JSON.parse(data) as HistoricalData;
     } catch {
       // Create new month
       historicalData = {
@@ -282,7 +300,7 @@ class AnalyticsManager {
     try {
       const historyFile = path.join(HISTORY_DIR, `${month}.json`);
       const data = await fs.readFile(historyFile, 'utf-8');
-      return JSON.parse(data);
+      return JSON.parse(data) as HistoricalData;
     } catch {
       return null;
     }

@@ -6,8 +6,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
 import { analytics } from './analytics.js';
 
-const ANALYTICS_PATH = 'docs/data/analytics.json';
-const HISTORY_DIR = 'docs/data/history';
+const ANALYTICS_PATH = 'dashboard/data/analytics.json';
+const HISTORY_DIR = 'dashboard/data/history';
 
 describe('Analytics Manager', () => {
   beforeEach(async () => {
@@ -57,7 +57,7 @@ describe('Analytics Manager', () => {
         daily: [],
       };
 
-      await fs.mkdir('docs/data', { recursive: true });
+      await fs.mkdir('dashboard/data', { recursive: true });
       await fs.writeFile(ANALYTICS_PATH, JSON.stringify(existingData), 'utf-8');
 
       // Force re-initialization

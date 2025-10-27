@@ -22,7 +22,7 @@ llm-daily/                        # Template repository
 │   └── examples/
 │       ├── daily-news/
 │       └── stock-summary/
-├── docs/                         # 🌐 GitHub Pages
+├── dashboard/                         # 🌐 GitHub Pages
 │   ├── index.html               # Dashboard
 │   ├── guide/                   # Documentation site
 │   ├── data/                    # Task results (auto-updated)
@@ -37,7 +37,7 @@ llm-daily/                        # Template repository
 │   └── workflow-generator.ts
 ├── .github/workflows/           # Auto-generated
 ├── .husky/                      # Git hooks
-└── docs/implementation/         # 📊 Tracking docs
+└── dashboard/implementation/         # 📊 Tracking docs
 ```
 
 ### Core Components
@@ -259,8 +259,8 @@ llm-daily/                        # Template repository
 **Total**: 0/124 tasks (0%)
 
 For detailed task tracking, see:
-- [`docs/implementation/PROGRESS.md`](docs/implementation/PROGRESS.md) - Central progress dashboard
-- [`docs/implementation/phase-*.md`](docs/implementation/) - Detailed phase breakdowns
+- [`dashboard/implementation/PROGRESS.md`](dashboard/implementation/PROGRESS.md) - Central progress dashboard
+- [`dashboard/implementation/phase-*.md`](dashboard/implementation/) - Detailed phase breakdowns
 
 ## 🔗 Dependencies
 
@@ -272,7 +272,7 @@ Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4
 - Phase 6 (Analytics) can start after Phase 2
 - Phase 7 (Testing) runs throughout
 
-See [`docs/implementation/DEPENDENCIES.md`](docs/implementation/DEPENDENCIES.md) for full dependency graph.
+See [`dashboard/implementation/DEPENDENCIES.md`](dashboard/implementation/DEPENDENCIES.md) for full dependency graph.
 
 ## 🎯 Success Criteria
 
@@ -337,7 +337,7 @@ Run tests after each task completion. Don't accumulate technical debt.
 
 ### For Users (After Implementation)
 - **README.md**: Quick start guide
-- **docs/guide/**: Comprehensive user documentation
+- **dashboard/guide/**: Comprehensive user documentation
 - **tasks/README.md**: How to create tasks
 - **CONTRIBUTING.md**: How to contribute
 
@@ -360,7 +360,7 @@ See individual phase files for specific tasks. Good first issues will be tagged 
 
 - **GitHub Issues**: Bug reports and feature requests
 - **Discussions**: Questions and community support
-- **Documentation**: Comprehensive guides in docs/guide/
+- **Documentation**: Comprehensive guides in dashboard/guide/
 
 ## 📄 License
 
@@ -368,4 +368,4 @@ MIT License - See LICENSE file for details
 
 ---
 
-**Next Steps**: Review [Phase 0](docs/implementation/phase-0-setup.md) to begin implementation.
+**Next Steps**: Review [Phase 0](dashboard/implementation/phase-0-setup.md) to begin implementation.

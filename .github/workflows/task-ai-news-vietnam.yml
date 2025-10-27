@@ -35,14 +35,17 @@ jobs:
 
       - name: Run task
         run: npm run task:run ai-news-vietnam
-        env:
 
+
+      - name: Build dashboard data
+        run: npm run dashboard:build
+        continue-on-error: true
 
       - name: Commit results
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/data/ tasks/ai-news-vietnam/memory.md tasks/ai-news-vietnam/results/ || true
+          git add dashboard/data/ tasks/ai-news-vietnam/memory.md tasks/ai-news-vietnam/results/ || true
           if ! git diff --quiet || ! git diff --cached --quiet; then
             git commit -m "chore(ai-news-vietnam): update results [skip ci]"
             git push

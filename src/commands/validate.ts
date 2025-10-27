@@ -50,7 +50,7 @@ export async function validateCommand(
     logger.info(
       `Validating ${tasksToValidate.length} task${tasksToValidate.length > 1 ? 's' : ''}...`
     );
-    console.log('');
+    logger.info('');
 
     // Validate each task
     const results: TaskValidation[] = [];
@@ -68,7 +68,7 @@ export async function validateCommand(
     }
 
     // Display summary
-    console.log('');
+    logger.info('');
     displaySummary(results);
 
     // Exit with appropriate code
@@ -174,20 +174,20 @@ function displayTaskValidation(result: TaskValidation): void {
 
   // Show errors
   for (const error of result.errors) {
-    console.log(`  ✗ ${error}`);
+    logger.info(`  ✗ ${error}`);
     const suggestion = getSuggestion(error);
     if (suggestion) {
-      console.log(`    💡 ${suggestion}`);
+      logger.info(`    💡 ${suggestion}`);
     }
   }
 
   // Show warnings
   for (const warning of result.warnings) {
-    console.log(`  ⚠ ${warning}`);
+    logger.info(`  ⚠ ${warning}`);
   }
 
   if (result.errors.length > 0 || result.warnings.length > 0) {
-    console.log('');
+    logger.info('');
   }
 }
 
@@ -225,11 +225,11 @@ function displaySummary(results: TaskValidation[]): void {
   const validCount = results.filter((r) => r.valid).length;
   const invalidCount = results.length - validCount;
 
-  console.log('─'.repeat(50));
-  console.log(`Summary: ${validCount}/${results.length} tasks valid`);
+  logger.info('─'.repeat(50));
+  logger.info(`Summary: ${validCount}/${results.length} tasks valid`);
 
   if (invalidCount > 0) {
-    console.log('');
+    logger.info('');
     logger.error(`${invalidCount} task${invalidCount > 1 ? 's' : ''} failed validation`);
   }
 }

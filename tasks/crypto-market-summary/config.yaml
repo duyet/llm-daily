@@ -1,0 +1,34 @@
+# Crypto Market Summary
+schedule:
+  cron: "0 11 * * *"  # Daily at 11 AM UTC
+  timezone: "UTC"
+  enabled: true
+
+providers:
+  - id: openrouter:minimax/minimax-m2:free
+    config:
+      temperature: 0.7
+      max_tokens: 2000
+
+memory:
+  enabled: true
+  updateStrategy: extract
+  deduplicationPrompt: |
+    Previous memory: {{memory}}
+    Today: {{date}}
+
+    Has the crypto market shown significant movements or news compared to yesterday?
+    Reply with JSON: {"shouldRun": true/false, "reason": "explanation"}
+
+  extractPrompt: |
+    Extract major market trends, notable price movements, and regulatory developments.
+    Note any recurring patterns or market sentiment shifts.
+
+outputs:
+  - type: commit
+    path: dashboard/data/tasks/crypto-market-summary.json
+    message: "chore(crypto): update market summary [skip ci]"
+
+  - type: file
+    path: results/{{date}}.md
+    format: markdown

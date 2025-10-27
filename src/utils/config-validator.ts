@@ -24,7 +24,7 @@ const providerConfigSchema = z.object({
     .string()
     .min(1, 'Provider ID cannot be empty')
     .regex(
-      /^[a-z0-9_-]+:[a-z0-9_/-]+$/i,
+      /^[a-z0-9_-]+:[a-z0-9_/:.-]+$/i,
       'Provider ID must be in format "provider:model" (e.g., "openai:gpt-4-turbo")'
     ),
   config: providerOptionsSchema.optional(),

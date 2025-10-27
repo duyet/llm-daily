@@ -41,7 +41,7 @@ memory:
 outputs:
   # Auto-commit to repository (triggers GitHub Pages update)
   - type: commit
-    path: docs/data/tasks/{{taskName}}.json
+    path: dashboard/data/tasks/{{taskName}}.json
 
   # Also save to dated markdown file
   - type: file

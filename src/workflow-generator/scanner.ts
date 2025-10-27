@@ -7,7 +7,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import { parse as parseYaml } from 'yaml';
 import type { ScannedTask, WorkflowConfig, WorkflowSecret } from '../types/workflow.types.js';
-import { taskConfigSchema } from '../types/config.types.js';
+import { taskConfigSchema, type TaskConfig } from '../types/config.types.js';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -106,7 +106,8 @@ async function scanTask(name: string, path: string, _showWarnings: boolean): Pro
     const configContent = await fs.readFile(configPath, 'utf-8');
 
     // Parse YAML
-    const rawConfig = parseYaml(configContent);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+    const rawConfig: any = parseYaml(configContent);
 
     // Validate config schema
     const result = taskConfigSchema.safeParse(rawConfig);
@@ -151,15 +152,16 @@ async function scanTask(name: string, path: string, _showWarnings: boolean): Pro
 /**
  * Extract workflow configuration from task config
  */
-function extractWorkflowConfig(
-  taskName: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  config: any
-): WorkflowConfig {
-  // Extract schedule (required)
-  const schedule = config.schedule || '0 9 * * *'; // Default to 9 AM UTC
+function extractWorkflowConfig(taskName: string, config: TaskConfig): WorkflowConfig {
+  // Extract cron schedule from ScheduleConfig object, string, or use default
+  let schedule = '0 9 * * *'; // Default to 9 AM UTC
+  if (typeof config.schedule === 'string') {
+    schedule = config.schedule;
+  } else if (typeof config.schedule === 'object' && config.schedule?.cron) {
+    schedule = config.schedule.cron;
+  }
 
-  // Extract timeout (default to 30 minutes)
+  // Use timeout from config or default
   const timeout = config.timeout || 30;
 
   // Extract secrets from provider configurations
@@ -177,25 +179,32 @@ function extractWorkflowConfig(
 /**
  * Extract required secrets from provider configurations
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function extractSecrets(config: any): WorkflowSecret[] {
+function extractSecrets(config: TaskConfig): WorkflowSecret[] {
   const secrets: WorkflowSecret[] = [];
   const seenSecrets = new Set<string>();
 
-  // Check providers for API key requirements
   if (config.providers && Array.isArray(config.providers)) {
     for (const provider of config.providers) {
+      // Type guard: ensure provider is an object with id property
       if (typeof provider.id === 'string') {
-        const [providerId] = provider.id.split(':');
+        const providerId = provider.id;
+
+        // Skip free models - they don't require API keys
+        // Free models are identified by ":free" suffix (e.g., "openrouter:minimax/minimax-m2:free")
+        if (typeof providerId === 'string' && providerId.includes(':free')) {
+          continue;
+        }
+
+        const [providerName] = providerId.split(':');
 
         // Map provider to required secret
         let secretKey: string | null = null;
         let envName: string | null = null;
 
-        if (providerId === 'openai') {
+        if (providerName === 'openai') {
           secretKey = 'OPENAI_API_KEY';
           envName = 'OPENAI_API_KEY';
-        } else if (providerId === 'openrouter') {
+        } else if (providerName === 'openrouter') {
           secretKey = 'OPENROUTER_API_KEY';
           envName = 'OPENROUTER_API_KEY';
         }
@@ -204,7 +213,7 @@ function extractSecrets(config: any): WorkflowSecret[] {
           secrets.push({
             name: envName!,
             secretKey,
-            description: `API key for ${providerId}`,
+            description: `API key for ${providerName}`,
           });
           seenSecrets.add(secretKey);
         }

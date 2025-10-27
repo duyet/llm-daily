@@ -165,7 +165,7 @@ function formatRelativeTime(date: Date): string {
  * Display tasks as a formatted table
  */
 function displayTasks(tasks: TaskInfo[], options: ListCommandOptions): void {
-  console.log(''); // Empty line
+  logger.info(''); // Empty line
 
   // Calculate column widths
   const nameWidth = Math.max(4, ...tasks.map((t) => t.name.length));
@@ -183,8 +183,8 @@ function displayTasks(tasks: TaskInfo[], options: ListCommandOptions): void {
     'Status'.padEnd(statusWidth),
   ].join(' │ ');
 
-  console.log(header);
-  console.log('─'.repeat(header.length));
+  logger.info(header);
+  logger.info('─'.repeat(header.length));
 
   // Rows
   for (const task of tasks) {
@@ -199,17 +199,17 @@ function displayTasks(tasks: TaskInfo[], options: ListCommandOptions): void {
       statusColor + statusText.padEnd(statusWidth) + '\x1b[0m',
     ].join(' │ ');
 
-    console.log(row);
+    logger.info(row);
 
     // Show cost if detailed and available
     if (options.detailed && task.cost !== undefined) {
-      console.log(`  Cost: $${task.cost.toFixed(4)}`);
+      logger.info(`  Cost: $${task.cost.toFixed(4)}`);
     }
   }
 
-  console.log(''); // Empty line
-  console.log(`Total: ${tasks.length} task${tasks.length !== 1 ? 's' : ''}`);
-  console.log(''); // Empty line
+  logger.info(''); // Empty line
+  logger.info(`Total: ${tasks.length} task${tasks.length !== 1 ? 's' : ''}`);
+  logger.info(''); // Empty line
 }
 
 /**

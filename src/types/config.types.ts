@@ -16,8 +16,10 @@ export interface TaskConfig {
   providers: ProviderConfig[];
   /** Task prompts/templates */
   prompts?: string[] | PromptConfig[];
-  /** Schedule configuration */
-  schedule?: ScheduleConfig;
+  /** Schedule configuration (cron string or object) */
+  schedule?: string | ScheduleConfig;
+  /** Job timeout in minutes (default: 30) */
+  timeout?: number;
   /** Caching configuration */
   caching?: CachingConfig;
   /** Memory/context configuration */

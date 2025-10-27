@@ -99,8 +99,8 @@ npx vitest run src/core/providers/            # Run all tests in directory
 - **`tasks/`** - User-managed task configurations (committed to repo)
 - **`src/`** - Framework code (don't modify unless fixing bugs or adding features)
 - **`.github/workflows/`** - Auto-generated (regenerate via `npm run task:generate`)
-- **`docs/`** - GitHub Pages site (dashboard auto-updates via workflows)
-- **`docs/implementation/`** - Implementation tracking documentation
+- **`dashboard/`** - GitHub Pages site (dashboard auto-updates via workflows)
+- **`dashboard/implementation/`** - Implementation tracking documentation
 
 ### Data Flow
 
@@ -119,9 +119,9 @@ Memory Update (tasks/{name}/memory.md)
   ↓
 Output Processing (commit/webhook/file)
   ↓
-Analytics Update (docs/data/analytics.json)
+Analytics Update (dashboard/data/analytics.json)
   ↓
-Dashboard Refresh (docs/index.html)
+Dashboard Refresh (dashboard/index.html)
 ```
 
 ## Key Implementation Patterns
@@ -183,10 +183,10 @@ Available in generated workflows:
 ## Development Workflow Notes
 
 ### Adding a New Feature
-1. Check implementation plan in `docs/implementation/` for phase alignment
+1. Check implementation plan in `dashboard/implementation/` for phase alignment
 2. Follow existing patterns in `src/core/` and `src/commands/`
 3. Add tests alongside implementation
-4. Update relevant documentation in `docs/guide/`
+4. Update relevant documentation in `dashboard/guide/`
 5. Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`
 
 ### Debugging Task Execution
@@ -234,7 +234,7 @@ git config commit.template .gitmessage
 
 ## Phase-Based Development
 
-This project follows an 8-phase implementation plan (Phase 0-7). See `docs/implementation/PROGRESS.md` for current status and `docs/implementation/phase-*.md` for detailed task breakdowns.
+This project follows an 8-phase implementation plan (Phase 0-7). See `dashboard/implementation/PROGRESS.md` for current status and `dashboard/implementation/phase-*.md` for detailed task breakdowns.
 
 When implementing features:
 - Check which phase the feature belongs to

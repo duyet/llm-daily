@@ -28,11 +28,11 @@ const mockTaskResult: TaskResult = {
 };
 
 describe('CommitOutput', () => {
-  const outputPath = 'docs/data/tasks/test-task.json';
+  const outputPath = 'dashboard/data/tasks/test-task.json';
 
   beforeEach(async () => {
     try {
-      await fs.rm('docs/data/tasks', { recursive: true, force: true });
+      await fs.rm('dashboard/data/tasks', { recursive: true, force: true });
     } catch {
       // Ignore
     }
@@ -40,7 +40,7 @@ describe('CommitOutput', () => {
 
   afterEach(async () => {
     try {
-      await fs.rm('docs/data/tasks', { recursive: true, force: true });
+      await fs.rm('dashboard/data/tasks', { recursive: true, force: true });
     } catch {
       // Ignore
     }
@@ -58,10 +58,10 @@ describe('CommitOutput', () => {
   });
 
   it('should support template variables in path', async () => {
-    const output = new CommitOutput({ path: 'docs/data/tasks/{{taskName}}.json' });
+    const output = new CommitOutput({ path: 'dashboard/data/tasks/{{taskName}}.json' });
     await output.execute(mockTaskResult);
 
-    const content = await fs.readFile('docs/data/tasks/test-task.json', 'utf-8');
+    const content = await fs.readFile('dashboard/data/tasks/test-task.json', 'utf-8');
     const saved = JSON.parse(content);
 
     expect(saved.taskName).toBe('test-task');

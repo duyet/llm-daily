@@ -26,6 +26,51 @@ export interface TaskMetrics {
 
   /** Output tokens */
   outputTokens: number;
+
+  /** Task schedule (cron expression) */
+  schedule?: string;
+
+  /** Task description */
+  description?: string;
+
+  /** Current task status */
+  status?: 'success' | 'failed' | 'pending' | 'running';
+
+  /** Next scheduled run timestamp */
+  nextRun?: string;
+
+  /** Recent runs (last 10) */
+  recentRuns?: TaskRunSummary[];
+}
+
+export interface TaskRunSummary {
+  /** Run timestamp */
+  timestamp: string;
+
+  /** Success or failure */
+  status: 'success' | 'failed';
+
+  /** Duration in seconds */
+  duration: number;
+
+  /** Tokens used */
+  tokens: {
+    input: number;
+    output: number;
+    total: number;
+  };
+
+  /** Estimated cost */
+  cost: number;
+
+  /** Provider used */
+  provider: string;
+
+  /** Model used */
+  model: string;
+
+  /** Error message if failed */
+  error?: string;
 }
 
 export interface DailyMetrics {

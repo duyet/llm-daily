@@ -1,0 +1,34 @@
+# Daily Motivation
+schedule:
+  cron: "0 7 * * *"  # Daily at 7 AM UTC (start the day right)
+  timezone: "UTC"
+  enabled: true
+
+providers:
+  - id: openrouter:minimax/minimax-m2:free
+    config:
+      temperature: 0.9  # Higher temperature for more creative content
+      max_tokens: 1500
+
+memory:
+  enabled: true
+  updateStrategy: extract
+  deduplicationPrompt: |
+    Previous memory: {{memory}}
+    Today: {{date}}
+
+    Should we generate new motivational content today?
+    Reply with JSON: {"shouldRun": true/false, "reason": "explanation"}
+
+  extractPrompt: |
+    Extract themes and topics covered in previous motivational messages.
+    Note which types of motivation resonated most (productivity, personal growth, resilience, etc).
+
+outputs:
+  - type: commit
+    path: dashboard/data/tasks/daily-motivation.json
+    message: "chore(motivation): update daily inspiration [skip ci]"
+
+  - type: file
+    path: results/{{date}}.md
+    format: markdown

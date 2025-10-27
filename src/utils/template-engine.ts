@@ -40,22 +40,25 @@ export function renderTemplate(template: string, data: TemplateData): string {
 function processEachBlocks(template: string, data: TemplateData): string {
   const eachRegex = /\{\{#each\s+(\w+)\}\}([\s\S]*?)\{\{\/each\}\}/g;
 
-  return template.replace(eachRegex, (_, arrayName, blockContent) => {
-    const array = data[arrayName];
+  return template.replace(
+    eachRegex,
+    (_match: string, arrayName: string, blockContent: string): string => {
+      const array = data[arrayName as keyof TemplateData];
 
-    if (!Array.isArray(array) || array.length === 0) {
-      return '';
+      if (!Array.isArray(array) || array.length === 0) {
+        return '';
+      }
+
+      return array
+        .map((item: TemplateData | string | number | boolean) => {
+          if (typeof item === 'object' && item !== null) {
+            return replaceVariables(blockContent, item);
+          }
+          return blockContent.replace(/\{\{(\w+)\}\}/g, String(item));
+        })
+        .join('\n');
     }
-
-    return array
-      .map((item: TemplateData | string | number | boolean) => {
-        if (typeof item === 'object' && item !== null) {
-          return replaceVariables(blockContent, item as TemplateData);
-        }
-        return blockContent.replace(/\{\{(\w+)\}\}/g, String(item));
-      })
-      .join('\n');
-  });
+  );
 }
 
 /**
@@ -64,24 +67,32 @@ function processEachBlocks(template: string, data: TemplateData): string {
 function processIfBlocks(template: string, data: TemplateData): string {
   const ifRegex = /\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g;
 
-  return template.replace(ifRegex, (_, conditionName, blockContent) => {
-    const condition = data[conditionName];
+  return template.replace(
+    ifRegex,
+    (_match: string, conditionName: string, blockContent: string): string => {
+      const condition = data[conditionName as keyof TemplateData];
 
-    // Simple truthy check
-    if (condition) {
-      return blockContent;
+      // Treat empty arrays as falsy for template rendering
+      if (Array.isArray(condition) && condition.length === 0) {
+        return '';
+      }
+
+      // Simple truthy check
+      if (condition) {
+        return blockContent;
+      }
+
+      return '';
     }
-
-    return '';
-  });
+  );
 }
 
 /**
  * Replace simple variables {{variable}}
  */
 function replaceVariables(template: string, data: TemplateData): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, varName) => {
-    const value = data[varName];
+  return template.replace(/\{\{(\w+)\}\}/g, (_match: string, varName: string): string => {
+    const value = data[varName as keyof TemplateData];
 
     if (value === undefined || value === null) {
       return '';

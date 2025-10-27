@@ -6,7 +6,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import type { GeneratedWorkflow, ScannedTask } from './types/workflow.types.js';
-import { renderTemplate, validateTemplate } from './utils/template-engine.js';
+import { renderTemplate, validateTemplate, type TemplateData } from './utils/template-engine.js';
 import { scanTasks } from './workflow-generator/scanner.js';
 import { logger } from './utils/logger.js';
 
@@ -133,7 +133,7 @@ async function generateWorkflow(
     taskName: task.config.taskName,
     schedule: task.config.schedule,
     timeout: task.config.timeout.toString(),
-    secrets: JSON.stringify(task.config.secrets || []),
+    secrets: (task.config.secrets || []) as unknown as TemplateData[],
     description: task.config.description || '',
   });
 

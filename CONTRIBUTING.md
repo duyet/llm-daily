@@ -141,7 +141,7 @@ llm-daily/
 │   └── utils/        # Utilities
 ├── tests/            # Test files
 ├── tasks/            # Example tasks
-├── docs/             # GitHub Pages
+├── dashboard/        # GitHub Pages
 └── .github/          # GitHub workflows
 ```
 

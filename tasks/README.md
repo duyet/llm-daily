@@ -57,6 +57,6 @@ See `examples/` directory for sample tasks:
 ## Documentation
 
 For detailed documentation, see:
-- [Getting Started Guide](../docs/guide/getting-started.html)
-- [Configuration Reference](../docs/guide/configuration.html)
-- [CLI Documentation](../docs/guide/cli.html)
+- [Getting Started Guide](../dashboard/guide/getting-started.html)
+- [Configuration Reference](../dashboard/guide/configuration.html)
+- [CLI Documentation](../dashboard/guide/cli.html)

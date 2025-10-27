@@ -97,14 +97,17 @@ async function getTaskDetails(
 }> {
   if (options.interactive || !taskName) {
     // Interactive mode
-    const answers = await inquirer.prompt([
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const answers: Record<string, unknown> = await inquirer.prompt([
       {
         type: 'input',
         name: 'name',
         message: 'Task name:',
         default: taskName,
         validate: (input: string) => {
-          if (!input) return 'Task name is required';
+          if (!input) {
+            return 'Task name is required';
+          }
           if (!/^[a-z0-9-]+$/.test(input)) {
             return 'Task name must contain only lowercase letters, numbers, and hyphens';
           }
@@ -418,11 +421,11 @@ Add persistent context here.
  * Show next steps to the user
  */
 function showNextSteps(taskName: string): void {
-  console.log('');
+  logger.info('');
   logger.info('Next steps:');
-  console.log(`  1. Edit tasks/${taskName}/prompt.md to customize the prompt`);
-  console.log(`  2. Edit tasks/${taskName}/config.yaml to adjust settings`);
-  console.log(`  3. Run the task: npm run task:run ${taskName}`);
-  console.log(`  4. Generate workflow: npm run task:generate`);
-  console.log('');
+  logger.info(`  1. Edit tasks/${taskName}/prompt.md to customize the prompt`);
+  logger.info(`  2. Edit tasks/${taskName}/config.yaml to adjust settings`);
+  logger.info(`  3. Run the task: npm run task:run ${taskName}`);
+  logger.info(`  4. Generate workflow: npm run task:generate`);
+  logger.info('');
 }
