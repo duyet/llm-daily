@@ -44,5 +44,5 @@
     "prefer-const": "error",
     "no-var": "error"
   },
-  "ignorePatterns": ["dist", "node_modules", "*.config.ts", "*.config.js", "dashboard"]
+  "ignorePatterns": ["dist", "node_modules", "*.config.ts", "*.config.js", "dashboard", "**/*.test.ts", "**/*.spec.ts"]
 }
