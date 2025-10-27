@@ -1,4 +1,3 @@
-"use strict";
 // GitHub API Integration
 // Handles authentication, workflow triggers, and status polling
 const GITHUB_API_BASE = 'https://api.github.com';
@@ -193,4 +192,5 @@ window.getWorkflowRun = getWorkflowRun;
 window.getRateLimitStatus = getRateLimitStatus;
 window.validateToken = validateToken;
 window.checkRateLimit = checkRateLimit;
+export {};
 //# sourceMappingURL=github-api.js.map

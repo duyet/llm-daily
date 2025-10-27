@@ -1,4 +1,3 @@
-"use strict";
 // Toast Notification System
 // Provides user feedback for actions, errors, and information
 /**
@@ -136,4 +135,5 @@ const Toast = {
 // Make functions globally available
 window.showToast = showToast;
 window.Toast = Toast;
+export {};
 //# sourceMappingURL=toast.js.map

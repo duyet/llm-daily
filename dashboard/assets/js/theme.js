@@ -1,4 +1,3 @@
-"use strict";
 // Dark mode theme toggle
 // Check for saved theme preference or default to 'light' mode
 (function () {
@@ -12,4 +11,5 @@ window.toggleDarkMode = function () {
     const isDark = document.documentElement.classList.toggle('dark');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
 };
+export {};
 //# sourceMappingURL=theme.js.map

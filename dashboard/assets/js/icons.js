@@ -1,4 +1,3 @@
-"use strict";
 /**
  * SVG Icon Library
  * Heroicons-inspired inline SVG icons for LLM Daily Dashboard
@@ -195,4 +194,5 @@ function getIcon(name, className) {
 // Make available globally
 window.Icons = Icons;
 window.getIcon = getIcon;
+export {};
 //# sourceMappingURL=icons.js.map

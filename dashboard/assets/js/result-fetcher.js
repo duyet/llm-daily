@@ -1,4 +1,3 @@
-"use strict";
 // Result File Fetching System
 // Handles fetching, caching, and error handling for task result files
 const basePath = window.location.pathname.includes('llm-daily') ? '/llm-daily' : '';
@@ -133,4 +132,5 @@ if (typeof module !== 'undefined' && module.exports) {
         getCacheStats
     };
 }
+export {};
 //# sourceMappingURL=result-fetcher.js.map

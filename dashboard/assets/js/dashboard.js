@@ -1,4 +1,3 @@
-"use strict";
 // Dashboard main script - Claude.ai inspired
 // Determine base path for GitHub Pages
 const basePath = window.location.pathname.includes('llm-daily') ? '/llm-daily' : '';
@@ -638,4 +637,5 @@ function updateTaskStatus(taskName, status, conclusion, run) {
         }
     }
 }
+export {};
 //# sourceMappingURL=dashboard.js.map

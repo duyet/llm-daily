@@ -1,4 +1,3 @@
-"use strict";
 // Enhanced Dashboard with Job Monitoring
 // Extends the basic dashboard with schedule display and run history
 /**
@@ -297,4 +296,5 @@ if (themeToggle) {
         setTimeout(loadEnhancedDashboard, 100);
     });
 }
+export {};
 //# sourceMappingURL=dashboard-enhanced.js.map

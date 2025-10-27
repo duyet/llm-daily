@@ -1,4 +1,3 @@
-"use strict";
 // Documentation viewer
 // Loads and renders markdown documentation
 // Determine base path for GitHub Pages
@@ -337,4 +336,5 @@ function showError(message) {
 }
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', initDocs);
+export {};
 //# sourceMappingURL=docs.js.map
