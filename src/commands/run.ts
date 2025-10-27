@@ -8,6 +8,7 @@ import { createTaskRunner, type TaskRunResult } from '../core/task-runner.js';
 import { logger } from '../utils/logger.js';
 import { withSpinner } from '../utils/progress.js';
 import { config as loadDotenv } from 'dotenv';
+import { validateTaskName, sanitizePath } from '../utils/security.js';
 
 /**
  * Run command options
@@ -28,6 +29,13 @@ export interface RunCommandOptions {
  */
 export async function runCommand(taskName: string, options: RunCommandOptions = {}): Promise<void> {
   try {
+    // Validate task name for security
+    const taskNameValidation = validateTaskName(taskName);
+    if (!taskNameValidation.valid) {
+      logger.error(`Invalid task name: ${taskNameValidation.error}`);
+      process.exit(1);
+    }
+
     // Load environment variables
     await loadEnvironment(options.envFile);
 
@@ -38,6 +46,13 @@ export async function runCommand(taskName: string, options: RunCommandOptions = 
     const exists = await runner.taskExists(taskName);
     if (!exists) {
       logger.error(`Task "${taskName}" not found in tasks/ directory`);
+      logger.info('Available tasks:');
+      const tasks = await runner.listTasks();
+      if (tasks.length > 0) {
+        tasks.forEach((task) => logger.info(`  - ${task}`));
+      } else {
+        logger.info('  (no tasks found)');
+      }
       process.exit(1);
     }
 
@@ -92,11 +107,17 @@ async function loadEnvironment(envFile?: string): Promise<void> {
   // Load custom env file if specified
   if (envFile) {
     try {
-      await fs.access(envFile);
-      loadDotenv({ path: envFile, override: true });
+      // Sanitize path to prevent path traversal
+      const safePath = sanitizePath(envFile);
+      await fs.access(safePath);
+      loadDotenv({ path: safePath, override: true });
       logger.debug(`Loaded environment from ${envFile}`);
     } catch (error) {
-      logger.warn(`Could not load environment file: ${envFile}`);
+      if (error instanceof Error && error.message.includes('Path traversal')) {
+        logger.error(`Security error: ${error.message}`);
+      } else {
+        logger.warn(`Could not load environment file: ${envFile}`);
+      }
     }
   }
 }

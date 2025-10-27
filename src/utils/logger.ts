@@ -1,7 +1,10 @@
 /**
  * Logger utility with color-coded output and log levels
  * Respects --quiet and --verbose flags
+ * Automatically masks sensitive data in logs
  */
+
+import { sanitizeLogMessage } from './security.js';
 
 /**
  * Log level type
@@ -116,29 +119,42 @@ export class Logger {
   }
 
   /**
-   * Internal log method
+   * Internal log method with automatic secret masking
    */
   private log(level: LogLevel, message: string, ...args: unknown[]): void {
     if (!this.shouldLog(level)) {
       return;
     }
 
+    // Sanitize message to mask sensitive data
+    const sanitized = sanitizeLogMessage(message);
     const prefix = this.formatPrefix(level);
-    const formatted = `${prefix} ${message}`;
+    const formatted = `${prefix} ${sanitized}`;
+
+    // Sanitize args
+    const sanitizedArgs = args.map((arg) => {
+      if (typeof arg === 'string') {
+        return sanitizeLogMessage(arg);
+      }
+      if (typeof arg === 'object' && arg !== null) {
+        return sanitizeLogMessage(JSON.stringify(arg));
+      }
+      return arg;
+    });
 
     // Use appropriate console method
     switch (level) {
       case 'error':
         // eslint-disable-next-line no-console
-        console.error(formatted, ...args);
+        console.error(formatted, ...sanitizedArgs);
         break;
       case 'warn':
         // eslint-disable-next-line no-console
-        console.warn(formatted, ...args);
+        console.warn(formatted, ...sanitizedArgs);
         break;
       default:
         // eslint-disable-next-line no-console
-        console.log(formatted, ...args);
+        console.log(formatted, ...sanitizedArgs);
     }
   }
 
