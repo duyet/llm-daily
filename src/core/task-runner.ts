@@ -13,6 +13,8 @@ import { shouldRunTask } from './memory/deduplication.js';
 import { validateTaskConfig } from '../utils/config-validator.js';
 import { validatePromptLength, validateOutputConfig } from '../utils/validation.js';
 import type { ProviderResponse } from '../types/provider.types.js';
+import { withTimeout, TimeoutError, getTimeoutFromEnv } from '../utils/timeout.js';
+import { TIMEOUTS } from '../constants.js';
 
 /**
  * Simplified task configuration (actual config on disk)
@@ -169,13 +171,27 @@ export class TaskRunner {
         };
       }
 
-      // 5. Call provider
+      // 5. Call provider with timeout
       const provider = createProvider({
         id: config.provider.id,
         config: config.provider.options,
       });
 
-      const response = await provider.call(prompt);
+      const taskTimeout = getTimeoutFromEnv('TASK_TIMEOUT', TIMEOUTS.TASK_DEFAULT);
+      const response = await withTimeout<ProviderResponse>(
+        `task execution for "${options.taskName}"`,
+        async (_signal) => {
+          // Provider call - note: providers may not support AbortSignal yet
+          // But timeout will still work by timing out the promise
+          return provider.call(prompt);
+        },
+        {
+          timeoutMs: taskTimeout,
+          onTimeout: () => {
+            console.warn(`Task "${options.taskName}" is taking longer than ${taskTimeout}ms`);
+          },
+        }
+      );
 
       // 6. Update memory
       let memoryUpdated = false;
@@ -226,6 +242,11 @@ export class TaskRunner {
       }).catch(() => {
         // Ignore analytics save errors
       });
+
+      // Provide more specific error message for timeout errors
+      if (error instanceof TimeoutError) {
+        throw new TaskRunnerError(`Task "${options.taskName}" timed out: ${error.message}`, error);
+      }
 
       throw new TaskRunnerError(
         `Failed to run task "${options.taskName}": ${error instanceof Error ? error.message : String(error)}`,

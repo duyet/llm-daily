@@ -9,6 +9,12 @@ import { logger } from '../utils/logger.js';
 import { withSpinner } from '../utils/progress.js';
 import { config as loadDotenv } from 'dotenv';
 import { validateTaskName, sanitizePath } from '../utils/security.js';
+import {
+  formatError,
+  ErrorCodes,
+  printFormattedError,
+  type ErrorContext,
+} from '../utils/error-formatter.js';
 
 /**
  * Run command options
@@ -32,7 +38,16 @@ export async function runCommand(taskName: string, options: RunCommandOptions = 
     // Validate task name for security
     const taskNameValidation = validateTaskName(taskName);
     if (!taskNameValidation.valid) {
-      logger.error(`Invalid task name: ${taskNameValidation.error}`);
+      const context: ErrorContext = {
+        operation: 'task validation',
+        taskName,
+      };
+      const error = formatError(
+        ErrorCodes.TASK_VALIDATION_FAILED,
+        taskNameValidation.error || 'Invalid task name',
+        context
+      );
+      logger.error(printFormattedError(error));
       process.exit(1);
     }
 
@@ -45,7 +60,16 @@ export async function runCommand(taskName: string, options: RunCommandOptions = 
     // Check if task exists
     const exists = await runner.taskExists(taskName);
     if (!exists) {
-      logger.error(`Task "${taskName}" not found in tasks/ directory`);
+      const context: ErrorContext = {
+        operation: 'task lookup',
+        taskName,
+      };
+      const error = formatError(
+        ErrorCodes.TASK_NOT_FOUND,
+        `Task "${taskName}" not found in tasks/ directory`,
+        context
+      );
+      logger.error(printFormattedError(error));
       logger.info('Available tasks:');
       const tasks = await runner.listTasks();
       if (tasks.length > 0) {
@@ -82,7 +106,17 @@ export async function runCommand(taskName: string, options: RunCommandOptions = 
       process.exit(1);
     }
   } catch (error) {
-    logger.error(`Failed to run task: ${error instanceof Error ? error.message : String(error)}`);
+    const context: ErrorContext = {
+      operation: 'task execution',
+      taskName,
+    };
+    const formattedError = formatError(
+      ErrorCodes.TASK_EXECUTION_FAILED,
+      error instanceof Error ? error.message : String(error),
+      context,
+      error instanceof Error ? error : undefined
+    );
+    logger.error(printFormattedError(formattedError));
     if (options.verbose && error instanceof Error && error.stack) {
       logger.debug(error.stack);
     }
@@ -114,9 +148,29 @@ async function loadEnvironment(envFile?: string): Promise<void> {
       logger.debug(`Loaded environment from ${envFile}`);
     } catch (error) {
       if (error instanceof Error && error.message.includes('Path traversal')) {
-        logger.error(`Security error: ${error.message}`);
+        const context: ErrorContext = {
+          operation: 'environment file loading',
+          file: envFile,
+        };
+        const formattedError = formatError(
+          ErrorCodes.FILE_PERMISSION,
+          error.message,
+          context,
+          error
+        );
+        logger.error(printFormattedError(formattedError));
       } else {
-        logger.warn(`Could not load environment file: ${envFile}`);
+        const context: ErrorContext = {
+          operation: 'environment file loading',
+          file: envFile,
+        };
+        const formattedError = formatError(
+          ErrorCodes.FILE_NOT_FOUND,
+          `Could not load environment file: ${envFile}`,
+          context,
+          error instanceof Error ? error : undefined
+        );
+        logger.warn(printFormattedError(formattedError));
       }
     }
   }

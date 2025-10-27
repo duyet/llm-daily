@@ -119,7 +119,10 @@ describe('newCommand', () => {
 
     await newCommand('existing-task', {});
 
-    expect(mockLogger.error).toHaveBeenCalledWith('Task "existing-task" already exists');
+    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('[ERR_FILE_WRITE]'));
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      expect.stringContaining('Task "existing-task" already exists')
+    );
     expect(process.exit).toHaveBeenCalledWith(1);
   });
 
@@ -202,7 +205,8 @@ describe('newCommand', () => {
 
     await newCommand('test-task', {});
 
-    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to create task'));
+    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('[ERR_TASK_EXECUTION]'));
+    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Permission denied'));
     expect(process.exit).toHaveBeenCalledWith(1);
   });
 

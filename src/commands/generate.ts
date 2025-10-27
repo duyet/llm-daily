@@ -7,6 +7,12 @@ import { logger } from '../utils/logger.js';
 import { withSpinner } from '../utils/progress.js';
 import { generateWorkflows, getGenerationSummary } from '../workflow-generator.js';
 import type { GeneratedWorkflow } from '../types/workflow.types.js';
+import {
+  formatError,
+  ErrorCodes,
+  printFormattedError,
+  type ErrorContext,
+} from '../utils/error-formatter.js';
 
 /**
  * Generate command options
@@ -137,9 +143,16 @@ export async function generateCommand(options: GenerateCommandOptions = {}): Pro
     logger.info('  4. Check Actions tab for scheduled runs');
     logger.info('');
   } catch (error) {
-    logger.error(
-      `Failed to generate workflows: ${error instanceof Error ? error.message : String(error)}`
+    const context: ErrorContext = {
+      operation: 'workflow generation',
+    };
+    const formattedError = formatError(
+      ErrorCodes.WORKFLOW_GENERATION_FAILED,
+      error instanceof Error ? error.message : String(error),
+      context,
+      error instanceof Error ? error : undefined
     );
+    logger.error(printFormattedError(formattedError));
     process.exit(1);
   }
 }

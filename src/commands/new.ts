@@ -9,6 +9,12 @@ import inquirer from 'inquirer';
 import * as YAML from 'yaml';
 import { logger } from '../utils/logger.js';
 import { withSpinner } from '../utils/progress.js';
+import {
+  formatError,
+  ErrorCodes,
+  printFormattedError,
+  type ErrorContext,
+} from '../utils/error-formatter.js';
 
 /**
  * Task template type
@@ -58,7 +64,17 @@ export async function newCommand(
     const taskDir = join('tasks', taskDetails.name);
     const exists = await taskExists(taskDir);
     if (exists) {
-      logger.error(`Task "${taskDetails.name}" already exists`);
+      const context: ErrorContext = {
+        operation: 'task creation',
+        taskName: taskDetails.name,
+        file: taskDir,
+      };
+      const error = formatError(
+        ErrorCodes.FILE_WRITE_ERROR,
+        `Task "${taskDetails.name}" already exists`,
+        context
+      );
+      logger.error(printFormattedError(error));
       process.exit(1);
     }
 
@@ -76,9 +92,17 @@ export async function newCommand(
 
     process.exit(0);
   } catch (error) {
-    logger.error(
-      `Failed to create task: ${error instanceof Error ? error.message : String(error)}`
+    const context: ErrorContext = {
+      operation: 'task creation',
+      taskName,
+    };
+    const formattedError = formatError(
+      ErrorCodes.TASK_EXECUTION_FAILED,
+      error instanceof Error ? error.message : String(error),
+      context,
+      error instanceof Error ? error : undefined
     );
+    logger.error(printFormattedError(formattedError));
     process.exit(1);
   }
 }

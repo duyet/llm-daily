@@ -250,8 +250,9 @@ describe('generateCommand', () => {
     await generateCommand();
 
     expect(mockLogger.error).toHaveBeenCalledWith(
-      expect.stringContaining('Failed to generate workflows')
+      expect.stringContaining('[ERR_WORKFLOW_GENERATION]')
     );
+    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to scan tasks'));
     expect(process.exit).toHaveBeenCalledWith(1);
   });
 

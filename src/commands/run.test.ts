@@ -108,8 +108,9 @@ describe('runCommand', () => {
 
     await runCommand('nonexistent-task');
 
+    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('[ERR_TASK_NOT_FOUND]'));
     expect(mockLogger.error).toHaveBeenCalledWith(
-      'Task "nonexistent-task" not found in tasks/ directory'
+      expect.stringContaining('Task "nonexistent-task" not found')
     );
     expect(mockLogger.info).toHaveBeenCalledWith('Available tasks:');
     expect(mockLogger.info).toHaveBeenCalledWith('  - other-task-1');
@@ -214,7 +215,8 @@ describe('runCommand', () => {
 
     await runCommand('test-task');
 
-    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to run task'));
+    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('[ERR_TASK_EXECUTION]'));
+    expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Provider API error'));
     expect(process.exit).toHaveBeenCalledWith(1);
   });
 

@@ -307,4 +307,304 @@ describe('Deduplication System', () => {
       ).rejects.toThrow(DeduplicationError);
     });
   });
+
+  describe('Edge cases', () => {
+    describe('Time-based edge cases', () => {
+      it('should handle exactly at minimum threshold', async () => {
+        // Exactly 24 hours ago (boundary condition)
+        const exactlyOneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const memory = createTestMemory(exactlyOneDayAgo);
+
+        const result = await shouldRunTask({
+          strategy: 'time',
+          taskContext: 'Test task',
+          memory,
+          minHoursBetweenRuns: 24,
+        });
+
+        expect(result.shouldRun).toBe(true);
+        expect(result.confidence).toBe(1.0);
+      });
+
+      it('should handle fractional hours correctly', async () => {
+        // 1.5 hours ago
+        const onePointFiveHoursAgo = new Date(Date.now() - 1.5 * 60 * 60 * 1000).toISOString();
+        const memory = createTestMemory(onePointFiveHoursAgo);
+
+        const result = await shouldRunTask({
+          strategy: 'time',
+          taskContext: 'Test task',
+          memory,
+          minHoursBetweenRuns: 2,
+        });
+
+        expect(result.shouldRun).toBe(false);
+        expect(result.reason).toContain('1.5 hours ago');
+      });
+
+      it('should handle very small time thresholds', async () => {
+        // 30 seconds ago
+        const thirtySecondsAgo = new Date(Date.now() - 30 * 1000).toISOString();
+        const memory = createTestMemory(thirtySecondsAgo);
+
+        const result = await shouldRunTask({
+          strategy: 'time',
+          taskContext: 'Test task',
+          memory,
+          minHoursBetweenRuns: 0.01, // ~36 seconds
+        });
+
+        expect(result.shouldRun).toBe(false);
+      });
+
+      it('should handle future timestamps gracefully', async () => {
+        // Future timestamp (clock skew scenario)
+        const futureTime = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+        const memory = createTestMemory(futureTime);
+
+        const result = await shouldRunTask({
+          strategy: 'time',
+          taskContext: 'Test task',
+          memory,
+          minHoursBetweenRuns: 24,
+        });
+
+        // Negative hours since last run means last run is in future
+        // The comparison (hoursSinceLastRun < minHours) will be true
+        // So it blocks the run
+        expect(result.shouldRun).toBe(false);
+      });
+    });
+
+    describe('Content-based edge cases', () => {
+      it('should handle empty memory body', async () => {
+        const memory: MemoryContent = {
+          metadata: {
+            lastRun: undefined,
+            totalRuns: 0,
+            totalTokens: 0,
+            totalCost: 0,
+            lastTopics: [],
+          },
+          body: '',
+        };
+
+        const result = await shouldRunTask({
+          strategy: 'content',
+          taskContext: 'Test task',
+          memory,
+        });
+
+        expect(typeof result.shouldRun).toBe('boolean');
+        expect(result.tokensUsed).toBeDefined();
+      });
+
+      it('should handle very long memory content', async () => {
+        const longContent = 'A'.repeat(10000);
+        const memory: MemoryContent = {
+          metadata: {
+            lastRun: undefined,
+            totalRuns: 5,
+            totalTokens: 5000,
+            totalCost: 0.05,
+            lastTopics: ['AI', 'Tech'],
+          },
+          body: longContent,
+        };
+
+        const result = await shouldRunTask({
+          strategy: 'content',
+          taskContext: 'Test task',
+          memory,
+        });
+
+        expect(typeof result.shouldRun).toBe('boolean');
+        expect(result.tokensUsed).toBeDefined();
+      });
+
+      it('should handle markdown code blocks in response', async () => {
+        const memory = createTestMemory();
+
+        // Override mockCall for this specific test
+        mockCall.mockResolvedValueOnce({
+          content: '```json\n{"shouldRun": true, "reason": "Test", "confidence": 0.9}\n```',
+          usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+          cost: 0.001,
+        });
+
+        const result = await shouldRunTask({
+          strategy: 'content',
+          taskContext: 'Test',
+          memory,
+        });
+
+        expect(result.shouldRun).toBe(true);
+        expect(result.confidence).toBe(0.9);
+      });
+
+      it('should handle confidence values outside 0-1 range', async () => {
+        const memory = createTestMemory();
+
+        // Override mockCall for this specific test
+        mockCall.mockResolvedValueOnce({
+          content: JSON.stringify({
+            shouldRun: true,
+            reason: 'Test',
+            confidence: 1.5, // Out of range
+          }),
+          usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+          cost: 0.001,
+        });
+
+        const result = await shouldRunTask({
+          strategy: 'content',
+          taskContext: 'Test',
+          memory,
+        });
+
+        // Should clamp to 0-1 range
+        expect(result.confidence).toBeGreaterThanOrEqual(0);
+        expect(result.confidence).toBeLessThanOrEqual(1);
+      });
+
+      it('should handle malformed JSON with missing fields', async () => {
+        const memory = createTestMemory();
+
+        // Override mockCall for this specific test
+        mockCall.mockResolvedValueOnce({
+          content: JSON.stringify({
+            shouldRun: true,
+            // Missing reason and confidence
+          }),
+          usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+          cost: 0.001,
+        });
+
+        await expect(
+          shouldRunTask({
+            strategy: 'content',
+            taskContext: 'Test',
+            memory,
+          })
+        ).rejects.toThrow(DeduplicationError);
+      });
+    });
+
+    describe('Hybrid strategy edge cases', () => {
+      it('should respect time check even with high confidence content result', async () => {
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+        const memory = createTestMemory(oneHourAgo);
+
+        // Override mockCall for this specific test (though it won't be called)
+        mockCall.mockResolvedValueOnce({
+          content: JSON.stringify({
+            shouldRun: true,
+            reason: 'Should run',
+            confidence: 0.99, // Very high confidence
+          }),
+          usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+          cost: 0.001,
+        });
+
+        const result = await shouldRunTask({
+          strategy: 'hybrid',
+          taskContext: 'Test',
+          memory,
+          minHoursBetweenRuns: 24,
+        });
+
+        // Time check should block even with high confidence
+        expect(result.shouldRun).toBe(false);
+        expect(result.tokensUsed).toBeUndefined(); // Should not call LLM
+      });
+
+      it('should handle exactly at confidence threshold', async () => {
+        const oneDayAgo = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
+        const memory = createTestMemory(oneDayAgo);
+
+        // Override mockCall for this specific test
+        mockCall.mockResolvedValueOnce({
+          content: JSON.stringify({
+            shouldRun: false,
+            reason: 'Maybe redundant',
+            confidence: 0.7, // Exactly at threshold
+          }),
+          usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+          cost: 0.001,
+        });
+
+        const result = await shouldRunTask({
+          strategy: 'hybrid',
+          taskContext: 'Test',
+          memory,
+          minHoursBetweenRuns: 24,
+          confidenceThreshold: 0.7,
+        });
+
+        // At threshold (0.7), confidence check is: confidence < threshold (0.7 < 0.7 = false)
+        // So it doesn't trigger low confidence path, uses LLM decision which is false
+        expect(result.shouldRun).toBe(false);
+      });
+
+      it('should handle zero confidence threshold', async () => {
+        const oneDayAgo = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
+        const memory = createTestMemory(oneDayAgo);
+
+        // Override mockCall for this specific test
+        mockCall.mockResolvedValueOnce({
+          content: JSON.stringify({
+            shouldRun: false,
+            reason: 'Test',
+            confidence: 0.05, // Very low confidence
+          }),
+          usage: { promptTokens: 100, completionTokens: 50, totalTokens: 150 },
+          cost: 0.001,
+        });
+
+        const result = await shouldRunTask({
+          strategy: 'hybrid',
+          taskContext: 'Test',
+          memory,
+          minHoursBetweenRuns: 24,
+          confidenceThreshold: 0, // Zero threshold
+        });
+
+        // With zero threshold, should always use LLM decision
+        expect(result.shouldRun).toBe(false);
+      });
+    });
+
+    describe('Memory metadata edge cases', () => {
+      it('should handle memory with no lastTopics', () => {
+        const memory: MemoryContent = {
+          metadata: {
+            lastRun: undefined,
+            totalRuns: 0,
+            totalTokens: 0,
+            totalCost: 0,
+            // lastTopics intentionally omitted
+          },
+          body: 'Test content',
+        };
+
+        const summary = getDeduplicationSummary(memory.metadata);
+        expect(summary.recentTopics).toEqual([]);
+      });
+
+      it('should handle memory with zero total runs', () => {
+        const memory = createTestMemory(undefined, 0, []);
+
+        const summary = getDeduplicationSummary(memory.metadata);
+        expect(summary.totalRuns).toBe(0);
+        expect(summary.hoursSinceLastRun).toBeNull();
+      });
+
+      it('should handle invalid date strings gracefully', () => {
+        // Note: hasMinimumTimePassed handles this by Date constructor
+        const result = hasMinimumTimePassed('invalid-date', 24);
+        // Invalid dates become NaN, which fails comparison
+        expect(typeof result).toBe('boolean');
+      });
+    });
+  });
 });

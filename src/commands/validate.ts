@@ -8,6 +8,12 @@ import { join } from 'path';
 import * as YAML from 'yaml';
 import { validateTaskConfig } from '../utils/config-validator.js';
 import { logger } from '../utils/logger.js';
+import {
+  formatError,
+  ErrorCodes,
+  printFormattedError,
+  type ErrorContext,
+} from '../utils/error-formatter.js';
 
 /**
  * Validate command options
@@ -75,7 +81,17 @@ export async function validateCommand(
     const allValid = results.every((r) => r.valid);
     process.exit(allValid ? 0 : 1);
   } catch (error) {
-    logger.error(`Failed to validate: ${error instanceof Error ? error.message : String(error)}`);
+    const context: ErrorContext = {
+      operation: 'validation',
+      taskName,
+    };
+    const formattedError = formatError(
+      ErrorCodes.TASK_VALIDATION_FAILED,
+      error instanceof Error ? error.message : String(error),
+      context,
+      error instanceof Error ? error : undefined
+    );
+    logger.error(printFormattedError(formattedError));
     process.exit(1);
   }
 }

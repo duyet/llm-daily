@@ -10,6 +10,9 @@ export const TIMEOUTS = {
   /** Default timeout for LLM provider API calls (30 seconds) */
   PROVIDER_DEFAULT: 30000,
 
+  /** Default timeout for task execution (2 minutes) */
+  TASK_DEFAULT: 120000,
+
   /** Default timeout for webhook requests (10 seconds) */
   WEBHOOK_DEFAULT: 10000,
 
