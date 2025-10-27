@@ -85,9 +85,10 @@ describe('Security Utilities', () => {
     });
 
     it('should fully mask short matching secrets', () => {
-      const text = 'Key: short123456789short'; // Must be 20+ chars to match API key pattern
+      const text = 'Key: short123456789012345'; // 21 chars - matches 20+ pattern
       const masked = maskSecrets(text);
-      expect(masked).toContain('****');
+      // For 21-char string, should mask middle: shor*************2345
+      expect(masked).toMatch(/shor\*+2345/);
     });
   });
 
