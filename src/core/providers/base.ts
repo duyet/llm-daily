@@ -12,6 +12,7 @@ import {
   ModelPricing,
   ProviderCapabilities,
 } from '../../types/provider.types.js';
+import { validateProviderConfig } from '../../utils/validation.js';
 
 /**
  * Abstract base class for all LLM providers
@@ -36,6 +37,24 @@ export abstract class BaseProvider {
   constructor(config: ProviderConfig) {
     this.config = config;
     this.model = this.parseModelFromId(config.id);
+
+    // Validate provider configuration
+    const configValidation = validateProviderConfig({
+      temperature: config.config?.temperature as number | undefined,
+      maxTokens: config.config?.max_tokens as number | undefined,
+      timeout: config.config?.timeout as number | undefined,
+    });
+    if (!configValidation.valid) {
+      throw new ProviderError(
+        ProviderErrorType.INVALID_REQUEST,
+        `Invalid provider configuration: ${configValidation.error}`,
+        undefined,
+        false
+      );
+    }
+    if (configValidation.warnings) {
+      console.warn('Provider configuration warnings:', configValidation.warnings.join('; '));
+    }
   }
 
   /**

@@ -19,6 +19,7 @@ import {
 } from './memory/writer.js';
 import { createProvider } from './providers/registry.js';
 import { BaseProvider } from './providers/base.js';
+import { validateMemoryContent, validateMemoryMetadata } from '../utils/validation.js';
 
 /**
  * Memory manager error
@@ -123,6 +124,17 @@ export class MemoryManager {
       const validation = validateMemory(toSave);
       if (!validation.valid) {
         throw new MemoryError(`Cannot save invalid memory: ${validation.errors.join(', ')}`);
+      }
+
+      // Validate content length and metadata
+      const contentValidation = validateMemoryContent(toSave.body);
+      if (!contentValidation.valid) {
+        throw new MemoryError(contentValidation.error!);
+      }
+
+      const metadataValidation = validateMemoryMetadata(toSave.metadata);
+      if (!metadataValidation.valid) {
+        throw new MemoryError(metadataValidation.error!);
       }
 
       await writeMemory(this.filePath, toSave);
