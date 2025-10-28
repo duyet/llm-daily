@@ -15,71 +15,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Tailwind Configuration -->
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            cream: '#FAF9F6',
-            beige: '#F5F3EF',
-            purple: {
-              DEFAULT: '#6B4FBB',
-              light: '#8B7FC7',
-              lighter: '#B5A9D8',
-              dark: '#5A3FA0',
-            },
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
-          },
-          boxShadow: {
-            'sm': '0 1px 2px rgba(0, 0, 0, 0.04)',
-            'md': '0 1px 3px rgba(0, 0, 0, 0.08)',
-            'lg': '0 2px 4px rgba(0, 0, 0, 0.06)',
-            'xl': '0 4px 12px rgba(0, 0, 0, 0.08)',
-          },
-          fontSize: {
-            'tiny': ['10px', '14px'],
-          },
-        }
-      }
-    }
-  </script>
+  <script src="assets/css/tailwind.config.js"></script>
 
-  <!-- Custom Animations -->
-  <style type="text/tailwindcss">
-    @layer utilities {
-      .animate-fade-in {
-        animation: fadeIn 0.3s ease-in;
-      }
-
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      .result-preview-gradient::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 100%;
-        height: 1.5em;
-        background: linear-gradient(to bottom, transparent, #F5F3EF);
-      }
-
-      .dark .result-preview-gradient::after {
-        background: linear-gradient(to bottom, transparent, #252525);
-      }
-    }
-  </style>
+  <!-- Custom Stylesheets -->
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/animations.css">
 </head>
 <body class="flex flex-col min-h-screen bg-cream font-sans antialiased dark:bg-gray-900 transition-colors">
   <!-- Navigation -->
@@ -370,6 +310,7 @@
   <!-- Toast Container (dynamically created by toast.js) -->
 
   <!-- Scripts -->
+  <script src="assets/js/config.js"></script>
   <script src="assets/js/icons.js"></script>
   <script src="assets/js/theme.js"></script>
   <script src="assets/js/toast.js"></script>
