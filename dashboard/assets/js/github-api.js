@@ -1,13 +1,11 @@
 // GitHub API Integration
 // Handles authentication, workflow triggers, and status polling
-const GITHUB_API_BASE = 'https://api.github.com';
-const REPO_OWNER = 'duyet'; // TODO: Make configurable
-const REPO_NAME = 'llm-daily'; // TODO: Make configurable
+// Configuration will be loaded from config.ts
+// Access via window.dashboardConfig
+const getConfig = () => window.dashboardConfig;
 // Rate limiting tracking
 let apiCallCount = 0;
 let rateLimitWindowStart = Date.now();
-const RATE_LIMIT_MAX = 4900; // Leave buffer from 5000/hour limit
-const RATE_LIMIT_WINDOW = 3600000; // 1 hour in milliseconds
 /**
  * Get GitHub Personal Access Token from localStorage
  * @returns Token or null if not set
@@ -36,13 +34,14 @@ function clearGitHubToken() {
  */
 function checkRateLimit() {
     const now = Date.now();
+    const cfg = getConfig();
     // Reset counter if window has passed
-    if (now - rateLimitWindowStart > RATE_LIMIT_WINDOW) {
+    if (now - rateLimitWindowStart > cfg.rateLimitWindow) {
         apiCallCount = 0;
         rateLimitWindowStart = now;
     }
-    if (apiCallCount >= RATE_LIMIT_MAX) {
-        const minutesUntilReset = Math.ceil((RATE_LIMIT_WINDOW - (now - rateLimitWindowStart)) / 60000);
+    if (apiCallCount >= cfg.rateLimitMax) {
+        const minutesUntilReset = Math.ceil((cfg.rateLimitWindow - (now - rateLimitWindowStart)) / 60000);
         throw new Error(`GitHub API rate limit approaching. Please wait ${minutesUntilReset} minutes.`);
     }
     apiCallCount++;
@@ -61,7 +60,8 @@ async function githubApiRequest(endpoint, options = {}) {
     }
     // Check rate limit
     checkRateLimit();
-    const url = endpoint.startsWith('http') ? endpoint : `${GITHUB_API_BASE}${endpoint}`;
+    const config = getConfig();
+    const url = endpoint.startsWith('http') ? endpoint : `${config.githubApiBase}${endpoint}`;
     const response = await fetch(url, {
         ...options,
         headers: {
@@ -89,7 +89,8 @@ async function githubApiRequest(endpoint, options = {}) {
  */
 async function getWorkflowId(workflowFilename) {
     try {
-        const workflows = await githubApiRequest(`/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows`);
+        const config = getConfig();
+        const workflows = await githubApiRequest(`/repos/${config.repoOwner}/${config.repoName}/actions/workflows`);
         const workflow = workflows.workflows.find((w) => w.path.endsWith(workflowFilename));
         if (!workflow) {
             throw new Error(`Workflow ${workflowFilename} not found`);
@@ -109,10 +110,11 @@ async function getWorkflowId(workflowFilename) {
  */
 async function triggerWorkflow(taskName, ref = 'main') {
     try {
+        const config = getConfig();
         const workflowFilename = `${taskName}.yml`;
         console.log(`[GitHubAPI] Triggering workflow: ${workflowFilename}`);
         // Make API call to trigger workflow
-        await githubApiRequest(`/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowFilename}/dispatches`, {
+        await githubApiRequest(`/repos/${config.repoOwner}/${config.repoName}/actions/workflows/${workflowFilename}/dispatches`, {
             method: 'POST',
             body: JSON.stringify({ ref }),
         });
@@ -132,8 +134,9 @@ async function triggerWorkflow(taskName, ref = 'main') {
  */
 async function getWorkflowRuns(taskName, limit = 10) {
     try {
+        const config = getConfig();
         const workflowFilename = `${taskName}.yml`;
-        const response = await githubApiRequest(`/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${workflowFilename}/runs?per_page=${limit}`);
+        const response = await githubApiRequest(`/repos/${config.repoOwner}/${config.repoName}/actions/workflows/${workflowFilename}/runs?per_page=${limit}`);
         return response.workflow_runs || [];
     }
     catch (error) {
@@ -148,7 +151,8 @@ async function getWorkflowRuns(taskName, limit = 10) {
  */
 async function getWorkflowRun(runId) {
     try {
-        return await githubApiRequest(`/repos/${REPO_OWNER}/${REPO_NAME}/actions/runs/${runId}`);
+        const config = getConfig();
+        return await githubApiRequest(`/repos/${config.repoOwner}/${config.repoName}/actions/runs/${runId}`);
     }
     catch (error) {
         console.error('[GitHubAPI] Failed to get workflow run:', error);
