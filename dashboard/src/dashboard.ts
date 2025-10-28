@@ -3,6 +3,13 @@
 // Determine base path for GitHub Pages
 const basePath = window.location.pathname.includes('llm-daily') ? '/llm-daily' : '';
 
+// Declare global prerendered data (injected by prerender script)
+declare global {
+  interface Window {
+    prerenderedAnalytics?: any;
+  }
+}
+
 // Global state
 let analyticsData = null;
 let currentModalTask = null;
@@ -16,13 +23,13 @@ function initTabs() {
   const tabButtons = document.querySelectorAll('.tab-button');
   const tabContents = document.querySelectorAll('.tab-content');
 
-  tabButtons.forEach(button => {
+  tabButtons.forEach((button) => {
     button.addEventListener('click', () => {
       const targetTab = button.dataset.tab;
 
       // Update active states
-      tabButtons.forEach(btn => btn.classList.remove('active'));
-      tabContents.forEach(content => content.classList.remove('active'));
+      tabButtons.forEach((btn) => btn.classList.remove('active'));
+      tabContents.forEach((content) => content.classList.remove('active'));
 
       button.classList.add('active');
       document.getElementById(`${targetTab}-tab`).classList.add('active');
@@ -33,6 +40,21 @@ function initTabs() {
 // Load and display dashboard data
 async function loadDashboard() {
   try {
+    // Check if we have pre-rendered data (instant load, no AJAX!)
+    if (window.prerenderedAnalytics && !analyticsData) {
+      console.log('✅ Using pre-rendered analytics data (instant load!)');
+      analyticsData = window.prerenderedAnalytics;
+      lastUpdated = new Date(analyticsData.lastUpdated || Date.now());
+
+      // No need to render - HTML is already pre-rendered!
+      // Just update the timestamp display
+      updateLastUpdatedDisplay();
+      return;
+    }
+
+    // Fallback: Fetch analytics data via AJAX (for manual refresh)
+    console.log('🔄 Fetching fresh analytics data...');
+
     // Add timeout to prevent indefinite loading
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -40,7 +62,7 @@ async function loadDashboard() {
     try {
       // Load analytics data
       const response = await fetch(`${basePath}/dashboard/data/analytics.json?t=${Date.now()}`, {
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -52,7 +74,7 @@ async function loadDashboard() {
       analyticsData = await response.json();
       lastUpdated = new Date();
 
-      // Render components
+      // Render components (for manual refresh)
       renderResultsTab(analyticsData);
       renderConfigTab(analyticsData);
 
@@ -77,7 +99,7 @@ function renderResultsTab(analytics) {
 
   const tasks = Object.entries(analytics.tasks || {}).map(([name, metrics]) => ({
     name,
-    ...metrics
+    ...metrics,
   }));
 
   if (tasks.length === 0) {
@@ -91,20 +113,26 @@ function renderResultsTab(analytics) {
   }
 
   // Generate result cards with Tailwind classes and SVG icons
-  container.innerHTML = tasks.map(task => {
-    const statusClass = task.successRate >= 0.95 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                       task.successRate >= 0.8 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                       'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-    const statusIcon = task.successRate >= 0.95 ?
-      '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' :
-      task.successRate >= 0.8 ?
-      '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>' :
-      '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+  container.innerHTML = tasks
+    .map((task) => {
+      const statusClass =
+        task.successRate >= 0.95
+          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+          : task.successRate >= 0.8
+            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      const statusIcon =
+        task.successRate >= 0.95
+          ? '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+          : task.successRate >= 0.8
+            ? '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>'
+            : '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
 
-    const timeAgo = task.lastRun ? formatTimeAgo(new Date(task.lastRun)) : 'Never';
-    const resultPreview = task.latestResult?.preview || 'Result data will be available after the next run';
+      const timeAgo = task.lastRun ? formatTimeAgo(new Date(task.lastRun)) : 'Never';
+      const resultPreview =
+        task.latestResult?.preview || 'Result data will be available after the next run';
 
-    return `
+      return `
       <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-all hover:shadow-md hover:border-purple-lighter shadow-sm" data-task="${task.name}">
         <div class="flex justify-between items-start mb-3">
           <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">${formatTaskName(task.name)}</h3>
@@ -150,7 +178,8 @@ function renderResultsTab(analytics) {
         </div>
       </div>
     `;
-  }).join('');
+    })
+    .join('');
 }
 
 // Render Tab 2: Configuration Table
@@ -159,7 +188,7 @@ function renderConfigTab(analytics) {
 
   const tasks = Object.entries(analytics.tasks || {}).map(([name, metrics]) => ({
     name,
-    ...metrics
+    ...metrics,
   }));
 
   if (tasks.length === 0) {
@@ -179,17 +208,21 @@ function renderConfigTab(analytics) {
     return;
   }
 
-  tbody.innerHTML = tasks.map(task => {
-    const statusClass = task.successRate >= 0.95 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                       task.successRate >= 0.8 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                       'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-    const statusText = task.successRate >= 0.95 ? 'Success' :
-                      task.successRate >= 0.8 ? 'Warning' : 'Error';
+  tbody.innerHTML = tasks
+    .map((task) => {
+      const statusClass =
+        task.successRate >= 0.95
+          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+          : task.successRate >= 0.8
+            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      const statusText =
+        task.successRate >= 0.95 ? 'Success' : task.successRate >= 0.8 ? 'Warning' : 'Error';
 
-    const timeAgo = task.lastRun ? formatTimeAgo(new Date(task.lastRun)) : 'Never';
-    const schedule = formatSchedule(task.schedule || 'Daily');
+      const timeAgo = task.lastRun ? formatTimeAgo(new Date(task.lastRun)) : 'Never';
+      const schedule = formatSchedule(task.schedule || 'Daily');
 
-    return `
+      return `
       <tr class="cursor-pointer transition-colors hover:bg-beige dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700 last:border-b-0" onclick="viewTaskDetails('${task.name}')">
         <td class="px-3 py-2.5"><span class="font-semibold text-gray-900 dark:text-gray-100 text-xs">${formatTaskName(task.name)}</span></td>
         <td class="px-3 py-2.5 text-gray-600 dark:text-gray-400 text-xs">${schedule}</td>
@@ -205,14 +238,15 @@ function renderConfigTab(analytics) {
         </td>
       </tr>
     `;
-  }).join('');
+    })
+    .join('');
 }
 
 // Helper Functions
 function formatTaskName(name) {
   return name
     .split(/[-_]/)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
 
@@ -225,7 +259,7 @@ function formatTimeAgo(date) {
     week: 604800,
     day: 86400,
     hour: 3600,
-    minute: 60
+    minute: 60,
   };
 
   for (const [unit, secondsInUnit] of Object.entries(intervals)) {
@@ -268,7 +302,8 @@ async function viewFullResult(taskName) {
   modal.classList.remove('hidden');
 
   // Update modal title
-  document.getElementById('modal-task-name').textContent = `Full Result: ${formatTaskName(taskName)}`;
+  document.getElementById('modal-task-name').textContent =
+    `Full Result: ${formatTaskName(taskName)}`;
 
   // Show loading state
   const modalContent = document.getElementById('modal-content');
@@ -311,14 +346,14 @@ async function viewFullResult(taskName) {
     // Update metadata
     const metadata = result.metadata || {};
     const metadataParts = [];
-    if (metadata.timestamp) metadataParts.push(`⏰ ${new Date(metadata.timestamp).toLocaleString()}`);
+    if (metadata.timestamp)
+      metadataParts.push(`⏰ ${new Date(metadata.timestamp).toLocaleString()}`);
     if (metadata.tokens) metadataParts.push(`📊 ${metadata.tokens} tokens`);
     if (metadata.cost) metadataParts.push(`💰 $${metadata.cost}`);
     if (metadata.duration) metadataParts.push(`⚡ ${metadata.duration}s`);
 
     document.getElementById('modal-metadata').textContent =
       metadataParts.length > 0 ? metadataParts.join(' • ') : 'No metadata available';
-
   } catch (error) {
     console.error('Error loading result:', error);
     modalContent.innerHTML = `
@@ -345,11 +380,12 @@ function copyResultToClipboard() {
     return;
   }
 
-  navigator.clipboard.writeText(currentModalResult.content)
+  navigator.clipboard
+    .writeText(currentModalResult.content)
     .then(() => {
       showToast('Result copied to clipboard!', 'success');
     })
-    .catch(error => {
+    .catch((error) => {
       console.error('Copy failed:', error);
       showToast('Failed to copy to clipboard', 'error');
     });
@@ -379,7 +415,9 @@ function downloadResult() {
 
 function viewTaskDetails(taskName) {
   // For now, show alert. Can be enhanced to open modal with full task details
-  alert(`View details for: ${formatTaskName(taskName)}\n\nThis will show configuration, history, and full results.`);
+  alert(
+    `View details for: ${formatTaskName(taskName)}\n\nThis will show configuration, history, and full results.`
+  );
 }
 
 // Error Display
@@ -570,7 +608,11 @@ async function validateAndSaveToken() {
 }
 
 function clearToken() {
-  if (confirm('Are you sure you want to clear the GitHub token? You will need to re-enter it to trigger jobs.')) {
+  if (
+    confirm(
+      'Are you sure you want to clear the GitHub token? You will need to re-enter it to trigger jobs.'
+    )
+  ) {
     clearGitHubToken();
     document.getElementById('github-token-input').value = '';
     showToast('Token cleared', 'info');
@@ -587,7 +629,9 @@ async function triggerJob(taskName) {
   }
 
   // Confirm trigger
-  const confirmed = confirm(`Trigger job "${formatTaskName(taskName)}"?\n\nThis will start a new workflow run on GitHub Actions.`);
+  const confirmed = confirm(
+    `Trigger job "${formatTaskName(taskName)}"?\n\nThis will start a new workflow run on GitHub Actions.`
+  );
   if (!confirmed) return;
 
   try {
@@ -598,7 +642,8 @@ async function triggerJob(taskName) {
     const button = document.querySelector(`[data-task="${taskName}"] .run-now-btn`);
     if (button) {
       button.disabled = true;
-      button.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Triggering...';
+      button.innerHTML =
+        '<svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Triggering...';
     }
 
     // Trigger workflow
@@ -613,14 +658,14 @@ async function triggerJob(taskName) {
     // Update button state
     if (button) {
       button.disabled = false;
-      button.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Run';
+      button.innerHTML =
+        '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Run';
     }
 
     // Refresh analytics after a short delay
     setTimeout(() => {
       loadDashboard();
     }, 3000);
-
   } catch (error) {
     console.error('Failed to trigger job:', error);
     showToast(`Failed to trigger job: ${error.message}`, 'error');
@@ -629,7 +674,8 @@ async function triggerJob(taskName) {
     const button = document.querySelector(`[data-task="${taskName}"] .run-now-btn`);
     if (button) {
       button.disabled = false;
-      button.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Run';
+      button.innerHTML =
+        '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Run';
     }
   }
 }
@@ -682,7 +728,6 @@ async function pollWorkflowStatus(taskName) {
       // Refresh analytics to show new results
       loadDashboard();
     }
-
   } catch (error) {
     console.error(`[Polling] Error for ${taskName}:`, error);
     // Continue polling despite errors
@@ -697,13 +742,17 @@ function updateTaskStatus(taskName, status, conclusion, run) {
   // Update status badge with SVG icons
   let statusHTML = '';
   if (status === 'queued') {
-    statusHTML = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Queued</span>';
+    statusHTML =
+      '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Queued</span>';
   } else if (status === 'in_progress') {
-    statusHTML = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"><svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Running</span>';
+    statusHTML =
+      '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"><svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>Running</span>';
   } else if (status === 'completed' && conclusion === 'success') {
-    statusHTML = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Success</span>';
+    statusHTML =
+      '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Success</span>';
   } else if (status === 'completed' && conclusion === 'failure') {
-    statusHTML = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Failed</span>';
+    statusHTML =
+      '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Failed</span>';
   }
 
   const statusBadge = card.querySelector('.status-badge');
