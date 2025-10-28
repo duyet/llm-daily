@@ -357,8 +357,66 @@ function downloadResult() {
     showToast('Result downloaded!', 'success');
 }
 function viewTaskDetails(taskName) {
-    // For now, show alert. Can be enhanced to open modal with full task details
-    alert(`View details for: ${formatTaskName(taskName)}\n\nThis will show configuration, history, and full results.`);
+    // Get task data from analytics
+    if (!analyticsData || !analyticsData.tasks || !analyticsData.tasks[taskName]) {
+        showToast(`Task "${taskName}" not found`, 'error');
+        return;
+    }
+    const task = analyticsData.tasks[taskName];
+    const modal = document.getElementById('task-details-modal');
+    // Populate modal with task data
+    document.getElementById('task-details-title').textContent = `Task: ${formatTaskName(taskName)}`;
+    document.getElementById('task-schedule').textContent = task.schedule || 'Not configured';
+    // Status badge
+    const statusElement = document.getElementById('task-status-detail');
+    const statusText = task.successRate >= 0.95 ? 'Success' : task.successRate >= 0.8 ? 'Warning' : 'Error';
+    const statusClass = task.successRate >= 0.95
+        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+        : task.successRate >= 0.8
+            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+    statusElement.innerHTML = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${statusClass}">${statusText}</span>`;
+    // Time information
+    document.getElementById('task-last-run').textContent = task.lastRun
+        ? new Date(task.lastRun).toLocaleString()
+        : 'Never';
+    document.getElementById('task-next-run').textContent = task.nextRun
+        ? new Date(task.nextRun).toLocaleString()
+        : 'Pending';
+    // Statistics
+    document.getElementById('task-total-runs').textContent = task.runs?.toString() || '0';
+    document.getElementById('task-success-rate').textContent =
+        `${(task.successRate * 100).toFixed(0)}%`;
+    document.getElementById('task-total-cost').textContent = `$${task.cost.toFixed(4)}`;
+    // Latest execution (from most recent run)
+    if (task.recentRuns && task.recentRuns.length > 0) {
+        const latestRun = task.recentRuns[0];
+        document.getElementById('task-model').textContent = latestRun.model || 'Unknown';
+        document.getElementById('task-tokens').textContent = formatNumber(latestRun.tokens || 0);
+        document.getElementById('task-input-tokens').textContent = (latestRun.tokens || 0).toString();
+        document.getElementById('task-output-tokens').textContent = (latestRun.tokens || 0).toString();
+        document.getElementById('task-execution-cost').textContent =
+            `$${(latestRun.cost || 0).toFixed(4)}`;
+        document.getElementById('task-duration').textContent = latestRun.duration
+            ? `${latestRun.duration.toFixed(2)}s`
+            : '-';
+    }
+    // Store current task for Run Now button
+    window.currentDetailTask = taskName;
+    // Show modal
+    modal.classList.remove('hidden');
+}
+function closeTaskDetailsModal() {
+    const modal = document.getElementById('task-details-modal');
+    modal.classList.add('hidden');
+    window.currentDetailTask = null;
+}
+function triggerJobFromModal() {
+    const taskName = window.currentDetailTask;
+    if (!taskName)
+        return;
+    closeTaskDetailsModal();
+    triggerJob(taskName);
 }
 // Error Display
 function showError(message) {
