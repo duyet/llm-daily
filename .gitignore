@@ -43,3 +43,4 @@ coverage/
 
 # Keep example env file
 !.env.example
+dashboard-backup/
