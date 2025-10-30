@@ -41,6 +41,9 @@ coverage/
 .cache/
 .temp/
 
+# Task runtime artifacts
+tasks/*/last-run.json
+
 # Keep example env file
 !.env.example
 dashboard-backup/
