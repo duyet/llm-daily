@@ -136,6 +136,7 @@ export class TaskRunner {
           strategy: 'content',
           taskContext: options.taskName,
           memory,
+          providerId: config.provider.id, // Use task's provider for deduplication
           confidenceThreshold: config.memory.contentThreshold ?? 0.7,
         });
 
@@ -282,9 +283,24 @@ export class TaskRunner {
         }
       }
 
+      // Normalize providers array to single provider
+      // The config from YAML has 'providers' array, but we need single 'provider'
+      const rawConfig = config as unknown as {
+        providers?: Array<{ id: string; config?: Record<string, unknown> }>;
+      };
+      const firstProvider = rawConfig.providers?.[0];
+
+      if (!firstProvider) {
+        throw new TaskRunnerError('No providers configured');
+      }
+
       // Apply defaults
       return {
         ...config,
+        provider: {
+          id: firstProvider.id,
+          options: firstProvider.config,
+        },
         memory: {
           enabled: config.memory?.enabled ?? false,
           strategy: config.memory?.strategy ?? 'extract',
