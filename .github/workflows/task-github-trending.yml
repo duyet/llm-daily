@@ -35,6 +35,9 @@ jobs:
 
       - name: Run task
         run: npm run task:run github-trending
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
 
       - name: Build dashboard data
