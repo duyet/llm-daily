@@ -10,7 +10,8 @@ on:
   workflow_dispatch:  # Allow manual triggering
 
 permissions:
-  contents: write  # Required for committing results
+  contents: write    # Required for committing results
+  workflows: write   # Required for regenerating workflows
 
 jobs:
   run-task:
