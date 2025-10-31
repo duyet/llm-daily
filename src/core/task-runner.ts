@@ -51,6 +51,8 @@ export interface TaskRunOptions {
   env?: Record<string, string>;
   /** Dry run mode */
   dryRun?: boolean;
+  /** Skip deduplication checks */
+  skipDeduplication?: boolean;
 }
 
 /**
@@ -131,7 +133,7 @@ export class TaskRunner {
       const memory = await memoryManager.load();
 
       // 3. Check deduplication
-      if (config.memory.enabled) {
+      if (config.memory.enabled && !options.skipDeduplication) {
         const dedupResult = await shouldRunTask({
           strategy: 'content',
           taskContext: options.taskName,
