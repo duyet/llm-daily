@@ -10,7 +10,8 @@ on:
   workflow_dispatch:  # Allow manual triggering
 
 permissions:
-  contents: write  # Required for committing results
+  contents: write    # Required for committing results
+  workflows: write   # Required for regenerating workflows
 
 jobs:
   run-task:
@@ -35,6 +36,9 @@ jobs:
 
       - name: Run task
         run: npm run task:run daily-motivation
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
 
       - name: Build dashboard data

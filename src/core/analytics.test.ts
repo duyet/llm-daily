@@ -9,7 +9,7 @@ import { analytics } from './analytics.js';
 const ANALYTICS_PATH = 'dashboard/data/analytics.json';
 const HISTORY_DIR = 'dashboard/data/history';
 
-describe('Analytics Manager', () => {
+describe.sequential('Analytics Manager', () => {
   beforeEach(async () => {
     // Clean up before each test
     try {

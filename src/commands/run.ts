@@ -28,6 +28,8 @@ export interface RunCommandOptions {
   verbose?: boolean;
   /** Quiet mode */
   quiet?: boolean;
+  /** Force run, skipping deduplication checks */
+  force?: boolean;
 }
 
 /**
@@ -89,6 +91,7 @@ export async function runCommand(taskName: string, options: RunCommandOptions = 
         return runner.run({
           taskName,
           dryRun: options.dryRun,
+          skipDeduplication: options.force,
         });
       },
       'Task completed'

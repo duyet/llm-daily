@@ -61,6 +61,7 @@ program
   .description('Run a task locally')
   .option('--env-file <path>', 'Load environment from custom .env file')
   .option('--dry-run', 'Dry run - show what would be executed')
+  .option('--force', 'Force run, skipping deduplication checks')
   .action(async (name, options) => {
     // Pass global options to command
     const globalOpts = program.opts();
