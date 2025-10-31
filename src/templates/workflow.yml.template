@@ -35,9 +35,12 @@ jobs:
 
       - name: Run task
         run: npm run task:run {{taskName}}
-{{#if secrets}}        env:
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+{{#if secrets}}
 {{#each secrets}}
-          {{name}}: ${{{{ secrets.{{secretKey}} }}}}
+          {{name}}: ${{ secrets.{{secretKey}} }}
 {{/each}}
 {{/if}}
 
