@@ -31,11 +31,11 @@ export default function Navigation() {
 
   return (
     <nav className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
-      <div className="max-w-screen-xl mx-auto px-6 py-3">
+      <div className="max-w-6xl mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 group">
             <svg
-              className="w-6 h-6 text-purple-DEFAULT"
+              className="w-6 h-6 text-purple-DEFAULT transition-transform duration-200 group-hover:scale-110"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -48,10 +48,10 @@ export default function Navigation() {
               />
             </svg>
             <div>
-              <h1 className="text-lg font-bold text-purple-DEFAULT tracking-tight leading-tight">
+              <h1 className="text-lg font-medium text-purple-DEFAULT tracking-tight leading-tight">
                 LLM Daily
               </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-neutral-600 dark:text-gray-400">
                 Automated task results
               </p>
             </div>
@@ -60,7 +60,7 @@ export default function Navigation() {
           <div className="flex items-center gap-2">
             <button
               onClick={toggleDarkMode}
-              className="p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+              className="p-2 text-neutral-700 dark:text-gray-300 hover:bg-neutral-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 hover:scale-110"
               title="Toggle dark mode"
               aria-label="Toggle dark mode"
             >
@@ -97,11 +97,11 @@ export default function Navigation() {
 
             <Link
               href="/guide"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-neutral-700 dark:text-gray-300 hover:bg-neutral-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 hover:scale-105"
               title="Documentation"
             >
               <svg
-                className="w-4 h-4"
+                className="w-4 h-4 transition-transform duration-200"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -120,7 +120,7 @@ export default function Navigation() {
               href="https://github.com/your-repo/llm-daily"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-white bg-purple-DEFAULT hover:bg-purple-light rounded-md transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-purple-DEFAULT hover:bg-purple-light rounded-lg transition-all duration-200 hover:scale-105"
               title="View on GitHub"
             >
               <svg
