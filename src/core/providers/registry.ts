@@ -6,9 +6,9 @@
 import { BaseProvider } from './base.js';
 import { OpenAIProvider } from './openai.js';
 import { OpenRouterProvider } from './openrouter.js';
-import { MCPProvider } from './mcp.js';
 import { ProviderConfig, ProviderError, ProviderErrorType } from '../../types/provider.types.js';
 import { parseProviderId } from './utils.js';
+import { MCPWrapper } from '../mcp/wrapper.js';
 
 /**
  * Provider factory function type
@@ -65,11 +65,6 @@ class ProviderRegistry {
    * @throws ProviderError if provider type is not supported
    */
   create(config: ProviderConfig): BaseProvider {
-    // Check if this is an MCP-enabled provider (prefix: "mcp:")
-    if (config.id.startsWith('mcp:')) {
-      return this.createMCPProvider(config);
-    }
-
     // Parse provider ID
     const parsed = parseProviderId(config.id);
 
@@ -77,7 +72,7 @@ class ProviderRegistry {
     if (!this.isRegistered(parsed.provider)) {
       throw new ProviderError(
         ProviderErrorType.INVALID_REQUEST,
-        `Unsupported provider type: "${parsed.provider}". Supported providers: ${Array.from(this.factories.keys()).join(', ')}, mcp`
+        `Unsupported provider type: "${parsed.provider}". Supported providers: ${Array.from(this.factories.keys()).join(', ')}`
       );
     }
 
@@ -102,54 +97,20 @@ class ProviderRegistry {
   }
 
   /**
-   * Create an MCP-enabled provider
-   * @param config Provider configuration with "mcp:" prefix
-   * @returns MCPProvider wrapping base provider
+   * Create a provider and optionally wrap with MCP
+   * @param config Provider configuration
+   * @returns Provider instance (wrapped with MCP if enabled)
    */
-  private createMCPProvider(config: ProviderConfig): MCPProvider {
-    // Check cache first
-    if (this.cachingEnabled) {
-      const cached = this.providerCache.get(config.id);
-      if (cached) {
-        return cached as MCPProvider;
-      }
-    }
-
-    // Validate MCP configuration
-    if (!config.config?.mcp) {
-      throw new ProviderError(
-        ProviderErrorType.INVALID_REQUEST,
-        'MCP configuration is required when using "mcp:" prefix. Add "mcp" section to provider config.'
-      );
-    }
-
-    // Extract base provider ID (e.g., "mcp:openai:gpt-4" -> "openai:gpt-4")
-    const baseProviderId = config.id.substring(4);
-    if (!baseProviderId) {
-      throw new ProviderError(
-        ProviderErrorType.INVALID_REQUEST,
-        'Invalid MCP provider ID. Expected format: "mcp:provider:model" (e.g., "mcp:openai:gpt-4-turbo")'
-      );
-    }
-
-    // Create base provider config
-    const baseConfig: ProviderConfig = {
-      ...config,
-      id: baseProviderId,
-    };
-
+  createWithMCP(config: ProviderConfig): BaseProvider {
     // Create base provider
-    const baseProvider = this.create(baseConfig);
+    const provider = this.create(config);
 
-    // Wrap with MCP provider
-    const mcpProvider = new MCPProvider(config, baseProvider);
-
-    // Cache the MCP provider
-    if (this.cachingEnabled) {
-      this.providerCache.set(config.id, mcpProvider);
+    // Wrap with MCP if enabled in config
+    if (config.config?.mcp?.enabled) {
+      return new MCPWrapper(config, provider, config.config.mcp);
     }
 
-    return mcpProvider;
+    return provider;
   }
 
   /**
@@ -247,6 +208,26 @@ export function createProvider(config: ProviderConfig): BaseProvider {
  */
 export function createProviders(configs: ProviderConfig[]): BaseProvider[] {
   return registry.createMultiple(configs);
+}
+
+/**
+ * Create a provider and optionally wrap with MCP if enabled
+ * @param config Provider configuration
+ * @returns Provider instance (wrapped with MCP if enabled)
+ *
+ * @example
+ * const provider = createProviderWithMCP({
+ *   id: 'openai:gpt-4o-mini',
+ *   config: {
+ *     mcp: {
+ *       enabled: true,
+ *       servers: [...]
+ *     }
+ *   }
+ * });
+ */
+export function createProviderWithMCP(config: ProviderConfig): BaseProvider {
+  return registry.createWithMCP(config);
 }
 
 /**

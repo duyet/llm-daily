@@ -1,12 +1,13 @@
 /**
- * Unit tests for MCP provider
+ * Unit tests for MCP Wrapper
+ * Tests the provider-independent MCP wrapper functionality
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { MCPProvider } from './mcp.js';
-import { OpenAIProvider } from './openai.js';
-import { createProvider, clearProviderCache } from './registry.js';
-import type { ProviderConfig } from '../../types/provider.types.js';
+import { MCPWrapper } from './wrapper.js';
+import { OpenAIProvider } from '../providers/openai.js';
+import { createProviderWithMCP, clearProviderCache } from '../providers/registry.js';
+import type { ProviderConfig, MCPConfig } from '../../types/provider.types.js';
 
 // Mock OpenAI
 vi.mock('openai', () => ({
@@ -58,7 +59,7 @@ vi.mock('@modelcontextprotocol/sdk/client/stdio.js', () => ({
   },
 }));
 
-describe('MCPProvider', () => {
+describe('MCPWrapper', () => {
   const originalOpenAIKey = process.env.OPENAI_API_KEY;
 
   beforeEach(() => {
@@ -72,9 +73,9 @@ describe('MCPProvider', () => {
   });
 
   describe('constructor', () => {
-    it('should create MCP provider with base provider', () => {
+    it('should create MCP wrapper around base provider', () => {
       const config: ProviderConfig = {
-        id: 'mcp:openai:gpt-4o-mini',
+        id: 'openai:gpt-4o-mini',
         config: {
           mcp: {
             enabled: true,
@@ -93,33 +94,48 @@ describe('MCPProvider', () => {
         id: 'openai:gpt-4o-mini',
       });
 
-      const mcpProvider = new MCPProvider(config, baseProvider);
+      const mcpConfig: MCPConfig = {
+        enabled: true,
+        servers: [
+          {
+            name: 'test',
+            transport: 'stdio',
+            command: 'test-cmd',
+          },
+        ],
+      };
 
-      expect(mcpProvider).toBeDefined();
-      expect(mcpProvider.getProviderName()).toBe('mcp');
-      expect(mcpProvider.getBaseProviderName()).toBe('openai');
+      const wrapper = new MCPWrapper(config, baseProvider, mcpConfig);
+
+      expect(wrapper).toBeDefined();
+      // Wrapper should report the base provider's name, not "mcp"
+      expect(wrapper.getProviderName()).toBe('openai');
     });
 
-    it('should throw error if MCP config is missing', () => {
+    it('should throw error if MCP is not enabled', () => {
       const config: ProviderConfig = {
-        id: 'mcp:openai:gpt-4o-mini',
-        config: {}, // No MCP config
+        id: 'openai:gpt-4o-mini',
       };
 
       const baseProvider = new OpenAIProvider({
         id: 'openai:gpt-4o-mini',
       });
 
-      expect(() => new MCPProvider(config, baseProvider)).toThrow(
-        'MCP configuration is required'
+      const mcpConfig: MCPConfig = {
+        enabled: false, // Not enabled
+        servers: [],
+      };
+
+      expect(() => new MCPWrapper(config, baseProvider, mcpConfig)).toThrow(
+        'MCP must be enabled to use MCPWrapper'
       );
     });
   });
 
   describe('integration with registry', () => {
-    it('should create MCP provider via registry with mcp: prefix', () => {
+    it('should create MCP-wrapped provider via createProviderWithMCP', () => {
       const config: ProviderConfig = {
-        id: 'mcp:openai:gpt-4o-mini',
+        id: 'openai:gpt-4o-mini',
         config: {
           mcp: {
             enabled: true,
@@ -134,40 +150,49 @@ describe('MCPProvider', () => {
         },
       };
 
-      const provider = createProvider(config);
+      const provider = createProviderWithMCP(config);
 
-      expect(provider).toBeInstanceOf(MCPProvider);
-      expect(provider.getProviderName()).toBe('mcp');
+      expect(provider).toBeInstanceOf(MCPWrapper);
+      expect(provider.getProviderName()).toBe('openai');
     });
 
-    it('should throw error if mcp: prefix used without MCP config', () => {
+    it('should create normal provider if MCP not enabled', () => {
       const config: ProviderConfig = {
-        id: 'mcp:openai:gpt-4o-mini',
-        config: {}, // No MCP config
+        id: 'openai:gpt-4o-mini',
+        config: {
+          // No MCP config
+        },
       };
 
-      expect(() => createProvider(config)).toThrow('MCP configuration is required');
+      const provider = createProviderWithMCP(config);
+
+      expect(provider).toBeInstanceOf(OpenAIProvider);
+      expect(provider).not.toBeInstanceOf(MCPWrapper);
+      expect(provider.getProviderName()).toBe('openai');
     });
 
-    it('should throw error if mcp: prefix has invalid format', () => {
+    it('should create normal provider if MCP disabled', () => {
       const config: ProviderConfig = {
-        id: 'mcp:', // No base provider
+        id: 'openai:gpt-4o-mini',
         config: {
           mcp: {
-            enabled: true,
+            enabled: false,
             servers: [],
           },
         },
       };
 
-      expect(() => createProvider(config)).toThrow('Invalid MCP provider ID');
+      const provider = createProviderWithMCP(config);
+
+      expect(provider).toBeInstanceOf(OpenAIProvider);
+      expect(provider).not.toBeInstanceOf(MCPWrapper);
     });
   });
 
   describe('call', () => {
     it('should connect, call base provider, and disconnect', async () => {
       const config: ProviderConfig = {
-        id: 'mcp:openai:gpt-4o-mini',
+        id: 'openai:gpt-4o-mini',
         config: {
           mcp: {
             enabled: true,
@@ -186,19 +211,30 @@ describe('MCPProvider', () => {
         id: 'openai:gpt-4o-mini',
       });
 
-      const mcpProvider = new MCPProvider(config, baseProvider);
-      const response = await mcpProvider.call('Test prompt');
+      const mcpConfig: MCPConfig = {
+        enabled: true,
+        servers: [
+          {
+            name: 'test',
+            transport: 'stdio',
+            command: 'test-cmd',
+          },
+        ],
+      };
+
+      const wrapper = new MCPWrapper(config, baseProvider, mcpConfig);
+      const response = await wrapper.call('Test prompt');
 
       expect(response).toBeDefined();
       expect(response.content).toBeDefined();
-      expect(response.provider).toBe('openai');
+      expect(response.provider).toBe('openai'); // Should delegate to base provider
     });
   });
 
   describe('capabilities', () => {
-    it('should delegate capabilities to base provider', () => {
+    it('should delegate capabilities to base provider with MCP enhancements', () => {
       const config: ProviderConfig = {
-        id: 'mcp:openai:gpt-4o-mini',
+        id: 'openai:gpt-4o-mini',
         config: {
           mcp: {
             enabled: true,
@@ -217,8 +253,19 @@ describe('MCPProvider', () => {
         id: 'openai:gpt-4o-mini',
       });
 
-      const mcpProvider = new MCPProvider(config, baseProvider);
-      const capabilities = mcpProvider.getCapabilities();
+      const mcpConfig: MCPConfig = {
+        enabled: true,
+        servers: [
+          {
+            name: 'test',
+            transport: 'stdio',
+            command: 'test-cmd',
+          },
+        ],
+      };
+
+      const wrapper = new MCPWrapper(config, baseProvider, mcpConfig);
+      const capabilities = wrapper.getCapabilities();
 
       expect(capabilities).toBeDefined();
       expect(capabilities.functionCalling).toBe(true); // MCP enables function calling
@@ -226,7 +273,7 @@ describe('MCPProvider', () => {
 
     it('should delegate pricing to base provider', () => {
       const config: ProviderConfig = {
-        id: 'mcp:openai:gpt-4o-mini',
+        id: 'openai:gpt-4o-mini',
         config: {
           mcp: {
             enabled: true,
@@ -245,8 +292,19 @@ describe('MCPProvider', () => {
         id: 'openai:gpt-4o-mini',
       });
 
-      const mcpProvider = new MCPProvider(config, baseProvider);
-      const pricing = mcpProvider.getModelPricing();
+      const mcpConfig: MCPConfig = {
+        enabled: true,
+        servers: [
+          {
+            name: 'test',
+            transport: 'stdio',
+            command: 'test-cmd',
+          },
+        ],
+      };
+
+      const wrapper = new MCPWrapper(config, baseProvider, mcpConfig);
+      const pricing = wrapper.getModelPricing();
 
       expect(pricing).toBeDefined();
       expect(pricing.input).toBeGreaterThan(0);

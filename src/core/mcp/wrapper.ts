@@ -1,11 +1,12 @@
 /**
- * MCP-enabled provider
- * Wraps base provider with MCP tool support
+ * MCP Wrapper
+ * Wraps any provider with MCP tool calling capabilities
+ * MCP is provider-independent and works with any LLM provider
  */
 
-import { BaseProvider } from './base.js';
-import { MCPClient } from '../mcp/client.js';
-import { getStrategyForProvider, type ToolCallStrategy } from '../mcp/strategies/index.js';
+import { BaseProvider } from '../providers/base.js';
+import { MCPClient } from './client.js';
+import { getStrategyForProvider, type ToolCallStrategy } from './strategies/index.js';
 import type {
   ProviderConfig,
   ProviderResponse,
@@ -13,36 +14,52 @@ import type {
   ModelPricing,
   ProviderCapabilities,
   MCPToolResult,
+  MCPConfig,
 } from '../../types/provider.types.js';
 
 /**
- * MCP Provider that wraps another provider with tool calling capabilities
+ * MCP Wrapper - wraps any provider with tool calling capabilities
+ * This is NOT a provider itself, but a wrapper that adds MCP to any provider
  */
-export class MCPProvider extends BaseProvider {
-  protected readonly providerName = 'mcp';
+export class MCPWrapper extends BaseProvider {
   private baseProvider: BaseProvider;
   private mcpClient: MCPClient;
   private toolCallStrategy: ToolCallStrategy;
   private toolCallCount = 0;
   private maxToolCalls: number;
 
-  constructor(config: ProviderConfig, baseProvider: BaseProvider) {
+  /**
+   * Create MCP wrapper around a base provider
+   * @param config Provider configuration (passed to BaseProvider)
+   * @param baseProvider The provider to wrap (OpenAI, Anthropic, etc.)
+   * @param mcpConfig MCP configuration
+   */
+  constructor(config: ProviderConfig, baseProvider: BaseProvider, mcpConfig: MCPConfig) {
+    // Pass config to BaseProvider
     super(config);
+
     this.baseProvider = baseProvider;
 
-    if (!config.config?.mcp) {
-      throw new Error('MCP configuration is required for MCPProvider');
+    if (!mcpConfig.enabled) {
+      throw new Error('MCP must be enabled to use MCPWrapper');
     }
 
-    this.mcpClient = new MCPClient(config.config.mcp);
-    this.maxToolCalls = config.config.mcp.maxToolCalls || 20;
+    this.mcpClient = new MCPClient(mcpConfig);
+    this.maxToolCalls = mcpConfig.maxToolCalls || 20;
 
-    // Select tool call strategy based on base provider and config
-    const preferredStrategy = config.config.mcp.toolCallStrategy as string | undefined;
+    // Select tool call strategy based on base provider
+    const preferredStrategy = mcpConfig.toolCallStrategy;
     this.toolCallStrategy = getStrategyForProvider(
       baseProvider.getProviderName(),
       preferredStrategy
     );
+  }
+
+  /**
+   * Get provider name (delegates to base provider)
+   */
+  protected get providerName(): string {
+    return this.baseProvider.getProviderName();
   }
 
   /**
@@ -102,6 +119,7 @@ export class MCPProvider extends BaseProvider {
             executionTime: tr.executionTime,
           })),
           mcpServers: this.mcpClient.getConnectedServers(),
+          mcpStrategy: this.toolCallStrategy.getName(),
         };
       }
 
@@ -164,5 +182,12 @@ export class MCPProvider extends BaseProvider {
    */
   getMCPClient(): MCPClient {
     return this.mcpClient;
+  }
+
+  /**
+   * Get wrapped provider
+   */
+  getBaseProvider(): BaseProvider {
+    return this.baseProvider;
   }
 }
