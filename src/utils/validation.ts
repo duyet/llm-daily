@@ -10,6 +10,7 @@ import {
   TIMEOUTS,
   TOKEN_ESTIMATION,
 } from '../constants.js';
+import type { MCPServerConfig } from '../types/provider.types.js';
 
 /**
  * Validation result
@@ -280,9 +281,7 @@ export function validateMCPServerConfig(serverConfig: {
     }
   } else if (transport === 'http' || transport === 'websocket') {
     if (!serverConfig.url) {
-      errors.push(
-        `MCP server "${serverConfig.name}": url is required for ${transport} transport`
-      );
+      errors.push(`MCP server "${serverConfig.name}": url is required for ${transport} transport`);
     }
   } else {
     errors.push(`MCP server "${serverConfig.name}": unsupported transport type "${transport}"`);
@@ -303,7 +302,7 @@ export function validateMCPServerConfig(serverConfig: {
  */
 export function validateMCPConfig(config: {
   enabled: boolean;
-  servers: any[];
+  servers: unknown[];
   toolTimeout?: number;
   maxToolCalls?: number;
 }): ValidationResult {
@@ -321,7 +320,7 @@ export function validateMCPConfig(config: {
   // Validate each server configuration
   if (config.servers) {
     for (const server of config.servers) {
-      const serverValidation = validateMCPServerConfig(server);
+      const serverValidation = validateMCPServerConfig(server as MCPServerConfig);
       if (!serverValidation.valid) {
         errors.push(serverValidation.error!);
       }
@@ -334,9 +333,7 @@ export function validateMCPConfig(config: {
       warnings.push('MCP tool timeout is less than 1 second, which may be too short');
     }
     if (config.toolTimeout > 300000) {
-      warnings.push(
-        'MCP tool timeout is greater than 5 minutes, which may cause long waits'
-      );
+      warnings.push('MCP tool timeout is greater than 5 minutes, which may cause long waits');
     }
   }
 
@@ -346,7 +343,9 @@ export function validateMCPConfig(config: {
       errors.push('MCP maxToolCalls must be at least 1');
     }
     if (config.maxToolCalls > 100) {
-      warnings.push('MCP maxToolCalls is very high (>100), which may result in long execution times');
+      warnings.push(
+        'MCP maxToolCalls is very high (>100), which may result in long execution times'
+      );
     }
   }
 
