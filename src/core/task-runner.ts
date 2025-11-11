@@ -4,7 +4,7 @@
  */
 
 import { promises as fs } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
 import * as YAML from 'yaml';
 import { createProvider } from './providers/registry.js';
 import { createMemoryManager } from './memory.js';
@@ -333,7 +333,11 @@ export class TaskRunner {
 
     for (const output of outputs) {
       try {
-        const outputPath = join(taskDir, output.path);
+        // Determine if path is task-relative or repo-root-relative
+        // Task-relative paths start with ./ or ../
+        // Repo-root-relative paths are used as-is
+        const isTaskRelative = output.path.startsWith('./') || output.path.startsWith('../');
+        const outputPath = isTaskRelative ? join(taskDir, output.path) : output.path;
         let content: string;
 
         switch (output.format) {
@@ -364,6 +368,9 @@ export class TaskRunner {
           default:
             content = response.content;
         }
+
+        // Ensure directory exists
+        await fs.mkdir(dirname(outputPath), { recursive: true });
 
         await fs.writeFile(outputPath, content, 'utf-8');
         created.push(outputPath);
