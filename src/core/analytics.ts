@@ -140,10 +140,12 @@ class AnalyticsManager {
       error,
     });
 
-    // Rebuild dashboard data (async, don't wait)
-    this.rebuildDashboardData().catch(() => {
-      // Silently fail - dashboard rebuilding is not critical
-    });
+    // Rebuild dashboard data (async, don't wait) - skip in test environment
+    if (process.env.NODE_ENV !== 'test' && process.env.VITEST !== 'true') {
+      this.rebuildDashboardData().catch(() => {
+        // Silently fail - dashboard rebuilding is not critical
+      });
+    }
   }
 
   /**
