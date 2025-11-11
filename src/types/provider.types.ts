@@ -23,8 +23,78 @@ export interface ProviderOptions {
   temperature?: number;
   /** Maximum tokens in response */
   maxTokens?: number;
+  /** MCP configuration (if provider supports MCP) */
+  mcp?: MCPConfig;
   /** Additional provider-specific options */
   [key: string]: unknown;
+}
+
+/**
+ * MCP server configuration
+ */
+export interface MCPServerConfig {
+  /** Server name/identifier */
+  name: string;
+  /** Transport type */
+  transport?: 'stdio' | 'http' | 'websocket';
+  /** For stdio transport: command to execute */
+  command?: string;
+  /** Command arguments */
+  args?: string[];
+  /** Environment variables for the server */
+  env?: Record<string, string>;
+  /** For http/ws transport: server URL */
+  url?: string;
+  /** HTTP headers (for http/ws transport) */
+  headers?: Record<string, string>;
+}
+
+/**
+ * MCP configuration for provider
+ */
+export interface MCPConfig {
+  /** Enable MCP support */
+  enabled: boolean;
+  /** MCP servers to connect to */
+  servers: MCPServerConfig[];
+  /** Allowed tools (whitelist) - if empty, all tools allowed */
+  allowedTools?: string[];
+  /** Blocked tools (blacklist) */
+  blockedTools?: string[];
+  /** Tool execution timeout in milliseconds */
+  toolTimeout?: number;
+  /** Maximum tool calls per task execution */
+  maxToolCalls?: number;
+  /** Include tool execution details in memory */
+  includeToolsInMemory?: boolean;
+}
+
+/**
+ * MCP tool definition
+ */
+export interface MCPTool {
+  /** Tool name */
+  name: string;
+  /** Tool description */
+  description: string;
+  /** JSON schema for tool input */
+  inputSchema: Record<string, unknown>;
+}
+
+/**
+ * MCP tool call result
+ */
+export interface MCPToolResult {
+  /** Tool name that was executed */
+  toolName: string;
+  /** Tool execution result */
+  result: unknown;
+  /** Error message if tool execution failed */
+  error?: string;
+  /** Execution time in milliseconds */
+  executionTime: number;
+  /** Whether the tool call was successful */
+  success: boolean;
 }
 
 /**
