@@ -159,17 +159,26 @@ export function progressBar(total: number, width?: number): ProgressBar {
 export async function withSpinner<T>(
   text: string,
   operation: () => Promise<T>,
-  successText?: string
+  successText?: string,
+  options?: { quiet?: boolean }
 ): Promise<T> {
   const spin = new Spinner(text);
-  spin.start();
+
+  // Only show spinner if not in quiet mode
+  if (!options?.quiet) {
+    spin.start();
+  }
 
   try {
     const result = await operation();
-    spin.succeed(successText);
+    if (!options?.quiet) {
+      spin.succeed(successText);
+    }
     return result;
   } catch (error) {
-    spin.fail();
+    if (!options?.quiet) {
+      spin.fail();
+    }
     throw error;
   }
 }

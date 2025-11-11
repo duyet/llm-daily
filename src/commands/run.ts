@@ -94,7 +94,8 @@ export async function runCommand(taskName: string, options: RunCommandOptions = 
           skipDeduplication: options.force,
         });
       },
-      'Task completed'
+      'Task completed',
+      { quiet: options.quiet }
     );
 
     // Display results
@@ -181,65 +182,87 @@ async function loadEnvironment(envFile?: string): Promise<void> {
 
 /**
  * Display task execution results
+ * Always shows output regardless of quiet mode - this is the final result
  */
 function displayResults(taskName: string, result: TaskRunResult, options: RunCommandOptions): void {
-  logger.info(''); // Empty line for spacing
+  // Use console.log directly to bypass logger filtering in quiet mode
+  // eslint-disable-next-line no-console
+  console.log(''); // Empty line for spacing
 
   if (result.skipped) {
-    logger.info(`Task "${taskName}" was skipped`);
+    // eslint-disable-next-line no-console
+    console.log(`Task "${taskName}" was skipped`);
     if (result.skipReason) {
-      logger.info(`Reason: ${result.skipReason}`);
+      // eslint-disable-next-line no-console
+      console.log(`Reason: ${result.skipReason}`);
     }
     return;
   }
 
   // Success header
-  logger.success(`Task "${taskName}" completed successfully`);
-  logger.info(''); // Empty line
+  // eslint-disable-next-line no-console
+  console.log(`\x1b[32m✓\x1b[0m Task "${taskName}" completed successfully`);
+  // eslint-disable-next-line no-console
+  console.log(''); // Empty line
 
   // Provider and model info
   if (result.response) {
-    logger.info(`Model: ${result.response.model}`);
+    // eslint-disable-next-line no-console
+    console.log(`Model: ${result.response.model}`);
   }
 
   // Metrics
   if (result.tokensUsed !== undefined) {
-    logger.info(`Tokens: ${result.tokensUsed.toLocaleString()}`);
+    // eslint-disable-next-line no-console
+    console.log(`Tokens: ${result.tokensUsed.toLocaleString()}`);
   }
 
   if (result.cost !== undefined) {
-    logger.info(`Cost: $${result.cost.toFixed(4)}`);
+    // eslint-disable-next-line no-console
+    console.log(`Cost: $${result.cost.toFixed(4)}`);
   }
 
   if (result.executionTime !== undefined) {
     const seconds = (result.executionTime / 1000).toFixed(2);
-    logger.info(`Execution Time: ${seconds}s`);
+    // eslint-disable-next-line no-console
+    console.log(`Execution Time: ${seconds}s`);
   }
 
-  logger.info(''); // Empty line
+  // eslint-disable-next-line no-console
+  console.log(''); // Empty line
 
   // Outputs
   if (result.outputsCreated && result.outputsCreated.length > 0) {
-    logger.info('Outputs created:');
+    // eslint-disable-next-line no-console
+    console.log('Outputs created:');
     for (const output of result.outputsCreated) {
-      logger.info(`  - ${output}`);
+      // eslint-disable-next-line no-console
+      console.log(`  - ${output}`);
     }
-    logger.info(''); // Empty line
+    // eslint-disable-next-line no-console
+    console.log(''); // Empty line
   }
 
   // Memory update
   if (result.memoryUpdated) {
-    logger.info('Memory updated');
-  } else if (result.memoryUpdated === false) {
+    // eslint-disable-next-line no-console
+    console.log('Memory updated');
+  } else if (result.memoryUpdated === false && !options.quiet) {
+    // Only show debug info if not in quiet mode
     logger.debug('Memory unchanged (no new insights)');
   }
 
   // Response content (if verbose)
   if (options.verbose && result.response) {
-    logger.info(''); // Empty line
-    logger.info('Response:');
-    logger.info('---');
-    logger.info(result.response.content);
-    logger.info('---');
+    // eslint-disable-next-line no-console
+    console.log(''); // Empty line
+    // eslint-disable-next-line no-console
+    console.log('Response:');
+    // eslint-disable-next-line no-console
+    console.log('---');
+    // eslint-disable-next-line no-console
+    console.log(result.response.content);
+    // eslint-disable-next-line no-console
+    console.log('---');
   }
 }
