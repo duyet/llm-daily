@@ -139,24 +139,6 @@ class AnalyticsManager {
       model,
       error,
     });
-
-    // Rebuild dashboard data (async, don't wait)
-    this.rebuildDashboardData().catch(() => {
-      // Silently fail - dashboard rebuilding is not critical
-    });
-  }
-
-  /**
-   * Rebuild dashboard data with enhanced metrics
-   */
-  private async rebuildDashboardData(): Promise<void> {
-    try {
-      // Dynamic import to avoid circular dependencies
-      const { buildDashboardData } = await import('../scripts/build-dashboard-data.js');
-      await buildDashboardData();
-    } catch {
-      // Silently fail if dashboard builder is not available
-    }
   }
 
   /**
