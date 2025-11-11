@@ -1,12 +1,17 @@
 # MCP (Model Context Protocol) Implementation Plan
 
+> **📌 STATUS**: Implementation complete with architectural improvements
+> **Last Updated**: 2025-11-11
+> **Note**: This plan has been executed with significant architectural improvements. MCP is implemented as a provider-independent wrapper (not a provider type). See [MCP_ARCHITECTURE_FIX.md](./MCP_ARCHITECTURE_FIX.md) for details on the final architecture.
+
 ## Executive Summary
 
 This document outlines the detailed plan for integrating **Model Context Protocol (MCP)** support into llm-daily. MCP is Anthropic's protocol for connecting AI assistants to external tools, data sources, and context providers. This integration will enable llm-daily tasks to access dynamic tools and resources during execution.
 
-**Estimated Effort**: 2-3 days
+**Estimated Effort**: 2-3 days (Completed)
 **Complexity**: Medium-High
 **Breaking Changes**: None (backward compatible)
+**Final Architecture**: MCP as provider-independent wrapper with strategy pattern for tool calls
 
 ---
 
@@ -71,15 +76,16 @@ We'll implement MCP as a **provider wrapper** that:
 │              TaskRunner                         │
 │  - Orchestrates task execution                  │
 │  - Loads config, memory, prompt                 │
+│  - Uses createProviderWithMCP()                 │
 └────────────────┬────────────────────────────────┘
                  │
                  ▼
 ┌─────────────────────────────────────────────────┐
-│          MCPProvider (new)                      │
+│          MCPWrapper (wrapper, not provider!)    │
 │  - Extends BaseProvider                         │
-│  - Wraps base provider (OpenAI/OpenRouter)      │
+│  - Wraps ANY provider (OpenAI/Anthropic/etc)    │
 │  - Manages MCP client lifecycle                 │
-│  - Handles tool calls                           │
+│  - Handles tool calls with strategy pattern     │
 └────────────────┬────────────────────────────────┘
                  │
          ┌───────┴────────┐
@@ -103,14 +109,15 @@ We'll implement MCP as a **provider wrapper** that:
 
 ```
 1. Task starts → Load config with MCP settings
-2. Create MCPProvider → Connect to configured MCP servers
-3. Load tools → Fetch available tools from servers
+2. Create provider via createProviderWithMCP() → Wraps provider with MCPWrapper if enabled
+3. MCPWrapper connects to configured MCP servers → Load tools
 4. Execute task:
    a. LLM receives prompt + tool descriptions
-   b. LLM responds with tool calls
-   c. MCPProvider executes tools via MCP client
-   d. Tool results injected back to LLM
-   e. LLM generates final response
+   b. LLM responds with tool calls (format: OpenAI/Anthropic/XML)
+   c. MCPWrapper uses strategy pattern to extract tool calls
+   d. MCPWrapper executes tools via MCP client
+   e. Tool results formatted and injected back to LLM
+   f. LLM generates final response
 5. Disconnect MCP servers → Return response
 ```
 
@@ -126,12 +133,12 @@ Add optional `mcp` section to provider config:
 # tasks/example-task/config.yaml
 
 provider:
-  id: "mcp:openai:gpt-4-turbo"  # New provider prefix
+  id: "openai:gpt-4-turbo"  # Standard provider ID (no mcp: prefix!)
   options:
     temperature: 0.7
     max_tokens: 4000
 
-    # New MCP configuration
+    # MCP configuration (enables MCP for this provider)
     mcp:
       enabled: true
       servers:
@@ -350,7 +357,9 @@ export class MCPClient {
 
 #### 4.3 Create MCP Provider
 
-**File: `src/core/providers/mcp.ts`**
+**File: `src/core/mcp/wrapper.ts`**
+
+**Note**: MCP wrapper is now in its own module (`src/core/mcp/`) since it's provider-independent
 
 ```typescript
 /**
@@ -360,12 +369,16 @@ export class MCPClient {
 
 import { BaseProvider } from './base.js';
 import { MCPClient } from '../mcp/client.js';
-import { ProviderConfig, ProviderResponse } from '../../types/provider.types.js';
+import { ProviderConfig, ProviderResponse, MCPConfig } from '../../types/provider.types.js';
 
-export class MCPProvider extends BaseProvider {
-  protected readonly providerName = 'mcp';
+/**
+ * MCPWrapper - wraps any provider with MCP tool calling capabilities
+ * This is NOT a provider type, but a wrapper for provider-independent MCP support
+ */
+export class MCPWrapper extends BaseProvider {
   private baseProvider: BaseProvider;
   private mcpClient: MCPClient;
+  private toolCallStrategy: ToolCallStrategy;
   private toolCallCount = 0;
 
   constructor(config: ProviderConfig, baseProvider: BaseProvider) {
@@ -412,21 +425,23 @@ export class MCPProvider extends BaseProvider {
 Add MCP provider support:
 
 ```typescript
-export function createProvider(config: ProviderConfig): BaseProvider {
-  const providerId = config.id;
+// Export function for creating provider with optional MCP wrapping
+export function createProviderWithMCP(config: ProviderConfig): BaseProvider {
+  const registry = ProviderRegistry.getInstance();
+  return registry.createWithMCP(config);
+}
 
-  // Check if MCP prefix
-  if (providerId.startsWith('mcp:')) {
-    // Extract base provider ID (e.g., "mcp:openai:gpt-4" -> "openai:gpt-4")
-    const baseProviderId = providerId.substring(4);
-    const baseConfig = { ...config, id: baseProviderId };
-    const baseProvider = createProvider(baseConfig);
+// In ProviderRegistry class:
+createWithMCP(config: ProviderConfig): BaseProvider {
+  // Create base provider
+  const provider = this.create(config);
 
-    // Wrap with MCP provider
-    return new MCPProvider(config, baseProvider);
+  // Wrap with MCP if enabled
+  if (config.config?.mcp?.enabled) {
+    return new MCPWrapper(config, provider, config.config.mcp);
   }
 
-  // Existing provider logic...
+  return provider;
 }
 ```
 
@@ -495,7 +510,7 @@ interface TaskOutput {
 #### 4.10 Write Tests
 
 **File: `src/core/mcp/client.test.ts`**
-**File: `src/core/providers/mcp.test.ts`**
+**File: `src/core/mcp/wrapper.test.ts`**
 
 Test coverage:
 - MCP client connection

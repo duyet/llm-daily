@@ -15,7 +15,7 @@ MCP (Model Context Protocol) is Anthropic's protocol for connecting AI assistant
 
 This task uses MCP to analyze the llm-daily codebase:
 
-1. **Provider Configuration**: Uses `mcp:openai:gpt-4o-mini` provider ID
+1. **Provider Configuration**: Uses OpenAI GPT-4o-mini with MCP enabled
 2. **MCP Server**: Connects to the `@modelcontextprotocol/server-filesystem` server
 3. **Tools**: Has access to `read_file`, `list_directory`, and `search_files` tools
 4. **Task**: Analyzes the project structure using these tools
@@ -47,31 +47,29 @@ The task will:
 
 ## Configuration Explained
 
-### Provider ID Format
+### Provider Configuration
 
 ```yaml
 provider:
-  id: "mcp:openai:gpt-4o-mini"
+  id: "openai:gpt-4o-mini"  # Standard provider ID
+  options:
+    mcp:
+      enabled: true           # Enable MCP for this provider
+      servers:
+        - name: "filesystem"
+          transport: "stdio"
+          command: "npx"
+          args:
+            - "-y"
+            - "@modelcontextprotocol/server-filesystem"
+            - "."
 ```
 
-- `mcp:` prefix enables MCP support
-- `openai` is the base provider
-- `gpt-4o-mini` is the model
-
-### MCP Configuration
-
-```yaml
-mcp:
-  enabled: true
-  servers:
-    - name: "filesystem"
-      transport: "stdio"
-      command: "npx"
-      args:
-        - "-y"
-        - "@modelcontextprotocol/server-filesystem"
-        - "."
-```
+**Key Points:**
+- Use standard provider IDs (no `mcp:` prefix)
+- MCP is enabled via `options.mcp.enabled: true`
+- MCP configuration goes under `options.mcp`
+- MCP works with ANY provider (OpenAI, Anthropic, OpenRouter, custom)
 
 - **servers**: List of MCP servers to connect to
 - **transport**: Communication method (`stdio`, `http`, `websocket`)
@@ -81,10 +79,14 @@ mcp:
 ### Tool Security
 
 ```yaml
-allowedTools:
-  - "read_file"
-  - "list_directory"
-  - "search_files"
+options:
+  mcp:
+    enabled: true
+    servers: [...]
+    allowedTools:
+      - "read_file"
+      - "list_directory"
+      - "search_files"
 ```
 
 Only explicitly allowed tools can be used (whitelist approach).
@@ -92,8 +94,11 @@ Only explicitly allowed tools can be used (whitelist approach).
 ### Tool Limits
 
 ```yaml
-toolTimeout: 30000      # 30 seconds max per tool
-maxToolCalls: 10        # Maximum 10 tool calls per run
+options:
+  mcp:
+    enabled: true
+    toolTimeout: 30000      # 30 seconds max per tool
+    maxToolCalls: 10        # Maximum 10 tool calls per run
 ```
 
 Prevents runaway tool usage.
@@ -105,12 +110,17 @@ Prevents runaway tool usage.
 To use a different MCP server (e.g., database):
 
 ```yaml
-servers:
-  - name: "postgres"
-    transport: "stdio"
-    command: "mcp-server-postgres"
-    args:
-      - "postgresql://localhost/mydb"
+provider:
+  id: "openai:gpt-4o-mini"
+  options:
+    mcp:
+      enabled: true
+      servers:
+        - name: "postgres"
+          transport: "stdio"
+          command: "mcp-server-postgres"
+          args:
+            - "postgresql://localhost/mydb"
 ```
 
 ### Different Base Provider
@@ -119,7 +129,11 @@ Use Anthropic Claude instead of OpenAI:
 
 ```yaml
 provider:
-  id: "mcp:openrouter:anthropic/claude-3-5-sonnet"
+  id: "openrouter:anthropic/claude-3-5-sonnet"  # No mcp: prefix!
+  options:
+    mcp:
+      enabled: true
+      servers: [...]
 ```
 
 ### HTTP MCP Server
@@ -127,12 +141,17 @@ provider:
 Connect to an HTTP-based MCP server:
 
 ```yaml
-servers:
-  - name: "custom-api"
-    transport: "http"
-    url: "http://localhost:3000/mcp"
-    headers:
-      Authorization: "Bearer ${MCP_TOKEN}"
+provider:
+  id: "openai:gpt-4o-mini"
+  options:
+    mcp:
+      enabled: true
+      servers:
+        - name: "custom-api"
+          transport: "http"
+          url: "http://localhost:3000/mcp"
+          headers:
+            Authorization: "Bearer ${MCP_TOKEN}"
 ```
 
 ## Available MCP Servers
@@ -170,7 +189,9 @@ Check that:
 Increase the timeout if tools are slow:
 
 ```yaml
-toolTimeout: 60000  # 60 seconds
+options:
+  mcp:
+    toolTimeout: 60000  # 60 seconds
 ```
 
 ## Next Steps
