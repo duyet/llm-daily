@@ -48,7 +48,7 @@
     "task:list": "node dist/cli.js list",
     "task:validate": "node dist/cli.js validate",
     "dashboard:build": "node dist/scripts/build-dashboard-data.js",
-    "dashboard:prerender": "node dashboard/scripts/prerender-dashboard.js"
+    "dashboard:prerender": "cd dashboard && npm run build"
   },
   "dependencies": {
     "commander": "^14.0.0",
