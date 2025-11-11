@@ -76,22 +76,36 @@ You can use multiple tools by including multiple tool_use blocks.`;
         // Check for content array with tool_use blocks
         if (Array.isArray(parsed.content)) {
           for (const block of parsed.content) {
-            if (block.type === 'tool_use' && block.name) {
+            if (
+              typeof block === 'object' &&
+              block !== null &&
+              block.type === 'tool_use' &&
+              typeof block.name === 'string'
+            ) {
               toolCalls.push({
-                id: block.id || this.generateToolCallId(),
+                id: typeof block.id === 'string' ? block.id : this.generateToolCallId(),
                 name: block.name,
-                arguments: block.input || {},
+                arguments:
+                  typeof block.input === 'object' && block.input !== null
+                    ? (block.input as Record<string, unknown>)
+                    : {},
               });
             }
           }
         }
 
         // Check for single tool_use block
-        if (parsed.type === 'tool_use' && parsed.name) {
+        if (
+          parsed.type === 'tool_use' &&
+          typeof parsed.name === 'string'
+        ) {
           toolCalls.push({
-            id: parsed.id || this.generateToolCallId(),
+            id: typeof parsed.id === 'string' ? parsed.id : this.generateToolCallId(),
             name: parsed.name,
-            arguments: parsed.input || {},
+            arguments:
+              typeof parsed.input === 'object' && parsed.input !== null
+                ? (parsed.input as Record<string, unknown>)
+                : {},
           });
         }
       }
@@ -101,11 +115,17 @@ You can use multiple tools by including multiple tool_use blocks.`;
         const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
         if (jsonMatch) {
           const embeddedParsed = this.safeParseJSON(jsonMatch[1]);
-          if (embeddedParsed?.type === 'tool_use') {
+          if (
+            embeddedParsed?.type === 'tool_use' &&
+            typeof embeddedParsed.name === 'string'
+          ) {
             toolCalls.push({
-              id: embeddedParsed.id || this.generateToolCallId(),
+              id: typeof embeddedParsed.id === 'string' ? embeddedParsed.id : this.generateToolCallId(),
               name: embeddedParsed.name,
-              arguments: embeddedParsed.input || {},
+              arguments:
+                typeof embeddedParsed.input === 'object' && embeddedParsed.input !== null
+                  ? (embeddedParsed.input as Record<string, unknown>)
+                  : {},
             });
           }
         }
@@ -116,11 +136,14 @@ You can use multiple tools by including multiple tool_use blocks.`;
       let match;
       while ((match = toolUseRegex.exec(content)) !== null) {
         const blockParsed = this.safeParseJSON(match[1].trim());
-        if (blockParsed && blockParsed.name) {
+        if (blockParsed && typeof blockParsed.name === 'string') {
           toolCalls.push({
-            id: blockParsed.id || this.generateToolCallId(),
+            id: typeof blockParsed.id === 'string' ? blockParsed.id : this.generateToolCallId(),
             name: blockParsed.name,
-            arguments: blockParsed.input || {},
+            arguments:
+              typeof blockParsed.input === 'object' && blockParsed.input !== null
+                ? (blockParsed.input as Record<string, unknown>)
+                : {},
           });
         }
       }
@@ -134,7 +157,7 @@ You can use multiple tools by including multiple tool_use blocks.`;
   formatToolResults(
     toolResults: MCPToolResult[],
     originalPrompt: string,
-    llmResponse: string
+    _llmResponse: string
   ): string {
     // Format results as tool_result blocks
     const resultsText = toolResults

@@ -5,6 +5,7 @@
 
 import { BaseProvider } from './base.js';
 import { MCPClient } from '../mcp/client.js';
+import { getStrategyForProvider, type ToolCallStrategy } from '../mcp/strategies/index.js';
 import type {
   ProviderConfig,
   ProviderResponse,
@@ -15,21 +16,13 @@ import type {
 } from '../../types/provider.types.js';
 
 /**
- * Tool call extracted from LLM response
- */
-interface ToolCall {
-  id: string;
-  name: string;
-  arguments: Record<string, unknown>;
-}
-
-/**
  * MCP Provider that wraps another provider with tool calling capabilities
  */
 export class MCPProvider extends BaseProvider {
   protected readonly providerName = 'mcp';
   private baseProvider: BaseProvider;
   private mcpClient: MCPClient;
+  private toolCallStrategy: ToolCallStrategy;
   private toolCallCount = 0;
   private maxToolCalls: number;
 
@@ -43,6 +36,13 @@ export class MCPProvider extends BaseProvider {
 
     this.mcpClient = new MCPClient(config.config.mcp);
     this.maxToolCalls = config.config.mcp.maxToolCalls || 20;
+
+    // Select tool call strategy based on base provider and config
+    const preferredStrategy = config.config.mcp.toolCallStrategy as string | undefined;
+    this.toolCallStrategy = getStrategyForProvider(
+      baseProvider.getProviderName(),
+      preferredStrategy
+    );
   }
 
   /**
@@ -62,16 +62,16 @@ export class MCPProvider extends BaseProvider {
         return await this.baseProvider.call(prompt);
       }
 
-      // Create enhanced prompt with tool descriptions
-      const enhancedPrompt = this.createToolPrompt(prompt, tools);
+      // Create enhanced prompt with tool descriptions using strategy
+      const enhancedPrompt = this.toolCallStrategy.createToolPrompt(prompt, tools);
 
       // Initial LLM call
       let response = await this.baseProvider.call(enhancedPrompt);
       const toolResults: MCPToolResult[] = [];
 
       // Multi-turn conversation loop for tool calls
-      while (this.hasToolCalls(response.content) && this.canCallMoreTools()) {
-        const toolCalls = this.extractToolCalls(response.content);
+      while (this.toolCallStrategy.hasToolCalls(response.content) && this.canCallMoreTools()) {
+        const toolCalls = this.toolCallStrategy.extractToolCalls(response.content);
 
         // Execute all tool calls in parallel
         const executionResults = await Promise.all(
@@ -81,9 +81,12 @@ export class MCPProvider extends BaseProvider {
         toolResults.push(...executionResults);
         this.toolCallCount += toolCalls.length;
 
-        // Continue conversation with tool results
-        const toolResultsText = this.formatToolResults(executionResults);
-        const continuationPrompt = `${enhancedPrompt}\n\nAssistant: ${response.content}\n\nTool Results:\n${toolResultsText}\n\nPlease continue your response based on the tool results.`;
+        // Continue conversation with tool results using strategy
+        const continuationPrompt = this.toolCallStrategy.formatToolResults(
+          executionResults,
+          enhancedPrompt,
+          response.content
+        );
 
         response = await this.baseProvider.call(continuationPrompt);
       }
@@ -108,86 +111,6 @@ export class MCPProvider extends BaseProvider {
       await this.mcpClient.disconnect();
       this.toolCallCount = 0;
     }
-  }
-
-  /**
-   * Create enhanced prompt with tool descriptions
-   */
-  private createToolPrompt(originalPrompt: string, tools: any[]): string {
-    const toolsJson = JSON.stringify(tools, null, 2);
-
-    return `You have access to the following tools:
-
-${toolsJson}
-
-To use a tool, respond with the following format:
-<tool_call>
-{
-  "name": "tool_name",
-  "arguments": {
-    "arg1": "value1"
-  }
-}
-</tool_call>
-
-You can call multiple tools by including multiple <tool_call> blocks.
-
-Original task:
-${originalPrompt}`;
-  }
-
-  /**
-   * Check if response contains tool calls
-   */
-  private hasToolCalls(content: string): boolean {
-    return content.includes('<tool_call>');
-  }
-
-  /**
-   * Extract tool calls from LLM response
-   */
-  private extractToolCalls(content: string): ToolCall[] {
-    const toolCalls: ToolCall[] = [];
-    const toolCallRegex = /<tool_call>([\s\S]*?)<\/tool_call>/g;
-    let match;
-
-    while ((match = toolCallRegex.exec(content)) !== null) {
-      try {
-        const toolCallJson = match[1].trim();
-        const parsed = JSON.parse(toolCallJson);
-
-        toolCalls.push({
-          id: `call_${Date.now()}_${toolCalls.length}`,
-          name: parsed.name,
-          arguments: parsed.arguments || {},
-        });
-      } catch (error) {
-        console.error('Failed to parse tool call:', error);
-      }
-    }
-
-    return toolCalls;
-  }
-
-  /**
-   * Format tool results for LLM
-   */
-  private formatToolResults(results: MCPToolResult[]): string {
-    return results
-      .map((result) => {
-        if (result.success) {
-          return `Tool: ${result.toolName}
-Status: Success
-Result: ${JSON.stringify(result.result, null, 2)}
-Execution time: ${result.executionTime}ms`;
-        } else {
-          return `Tool: ${result.toolName}
-Status: Failed
-Error: ${result.error}
-Execution time: ${result.executionTime}ms`;
-        }
-      })
-      .join('\n\n---\n\n');
   }
 
   /**

@@ -75,28 +75,45 @@ To call a function, respond with a JSON object in this format:
       if (parsed) {
         // Check for single function_call
         if (parsed.function_call && typeof parsed.function_call === 'object') {
-          const fc = parsed.function_call as any;
-          toolCalls.push({
-            id: this.generateToolCallId(),
-            name: fc.name,
-            arguments:
+          const fc = parsed.function_call as Record<string, unknown>;
+          if (typeof fc.name === 'string') {
+            const args =
               typeof fc.arguments === 'string'
-                ? this.safeParseJSON(fc.arguments) || {}
-                : fc.arguments || {},
-          });
+                ? this.safeParseJSON(fc.arguments)
+                : typeof fc.arguments === 'object' && fc.arguments !== null
+                  ? (fc.arguments as Record<string, unknown>)
+                  : null;
+
+            toolCalls.push({
+              id: this.generateToolCallId(),
+              name: fc.name,
+              arguments: args || {},
+            });
+          }
         }
 
         // Check for tool_calls array
         if (Array.isArray(parsed.tool_calls)) {
           for (const tc of parsed.tool_calls) {
-            if (tc.type === 'function' && tc.function) {
+            if (
+              typeof tc === 'object' &&
+              tc !== null &&
+              tc.type === 'function' &&
+              typeof tc.function === 'object' &&
+              tc.function !== null &&
+              typeof tc.function.name === 'string'
+            ) {
+              const args =
+                typeof tc.function.arguments === 'string'
+                  ? this.safeParseJSON(tc.function.arguments)
+                  : typeof tc.function.arguments === 'object' && tc.function.arguments !== null
+                    ? (tc.function.arguments as Record<string, unknown>)
+                    : null;
+
               toolCalls.push({
-                id: tc.id || this.generateToolCallId(),
+                id: typeof tc.id === 'string' ? tc.id : this.generateToolCallId(),
                 name: tc.function.name,
-                arguments:
-                  typeof tc.function.arguments === 'string'
-                    ? this.safeParseJSON(tc.function.arguments) || {}
-                    : tc.function.arguments || {},
+                arguments: args || {},
               });
             }
           }
@@ -108,16 +125,25 @@ To call a function, respond with a JSON object in this format:
         const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
         if (jsonMatch) {
           const embeddedParsed = this.safeParseJSON(jsonMatch[1]);
-          if (embeddedParsed?.function_call) {
-            const fc = embeddedParsed.function_call as any;
-            toolCalls.push({
-              id: this.generateToolCallId(),
-              name: fc.name,
-              arguments:
+          if (
+            embeddedParsed?.function_call &&
+            typeof embeddedParsed.function_call === 'object'
+          ) {
+            const fc = embeddedParsed.function_call as Record<string, unknown>;
+            if (typeof fc.name === 'string') {
+              const args =
                 typeof fc.arguments === 'string'
-                  ? this.safeParseJSON(fc.arguments) || {}
-                  : fc.arguments || {},
-            });
+                  ? this.safeParseJSON(fc.arguments)
+                  : typeof fc.arguments === 'object' && fc.arguments !== null
+                    ? (fc.arguments as Record<string, unknown>)
+                    : null;
+
+              toolCalls.push({
+                id: this.generateToolCallId(),
+                name: fc.name,
+                arguments: args || {},
+              });
+            }
           }
         }
       }
@@ -131,7 +157,7 @@ To call a function, respond with a JSON object in this format:
   formatToolResults(
     toolResults: MCPToolResult[],
     originalPrompt: string,
-    llmResponse: string
+    _llmResponse: string
   ): string {
     // Format results as tool responses
     const resultsText = toolResults

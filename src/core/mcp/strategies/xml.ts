@@ -28,7 +28,7 @@ export class XMLToolCallStrategy extends BaseToolCallStrategy {
     return 'xml';
   }
 
-  supportsProvider(providerName: string): boolean {
+  supportsProvider(_providerName: string): boolean {
     // Works with any provider as fallback
     return true;
   }
@@ -70,11 +70,14 @@ ${originalPrompt}`;
         const toolCallJson = match[1].trim();
         const parsed = this.safeParseJSON(toolCallJson);
 
-        if (parsed && parsed.name) {
+        if (parsed && typeof parsed.name === 'string') {
           toolCalls.push({
             id: this.generateToolCallId(),
             name: parsed.name,
-            arguments: parsed.arguments || {},
+            arguments:
+              typeof parsed.arguments === 'object' && parsed.arguments !== null
+                ? (parsed.arguments as Record<string, unknown>)
+                : {},
           });
         }
       } catch (error) {
@@ -88,7 +91,7 @@ ${originalPrompt}`;
   formatToolResults(
     toolResults: MCPToolResult[],
     originalPrompt: string,
-    llmResponse: string
+    _llmResponse: string
   ): string {
     const toolResultsText = toolResults
       .map((result) => {

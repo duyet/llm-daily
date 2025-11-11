@@ -67,6 +67,8 @@ export interface MCPConfig {
   maxToolCalls?: number;
   /** Include tool execution details in memory */
   includeToolsInMemory?: boolean;
+  /** Tool call strategy (openai, anthropic, xml) - auto-detected if not specified */
+  toolCallStrategy?: string;
 }
 
 /**
