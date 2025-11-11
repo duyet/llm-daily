@@ -28,13 +28,13 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --loglevel=error
 
       - name: Build project
-        run: npm run build
+        run: npm run build --silent
 
       - name: Run task
-        run: npm run task:run tech-news-daily
+        run: npm run task:run tech-news-daily -- --quiet
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
