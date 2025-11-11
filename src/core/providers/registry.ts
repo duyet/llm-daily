@@ -8,6 +8,7 @@ import { OpenAIProvider } from './openai.js';
 import { OpenRouterProvider } from './openrouter.js';
 import { ProviderConfig, ProviderError, ProviderErrorType } from '../../types/provider.types.js';
 import { parseProviderId } from './utils.js';
+import { MCPWrapper } from '../mcp/wrapper.js';
 
 /**
  * Provider factory function type
@@ -90,6 +91,23 @@ class ProviderRegistry {
     // Cache the provider
     if (this.cachingEnabled) {
       this.providerCache.set(config.id, provider);
+    }
+
+    return provider;
+  }
+
+  /**
+   * Create a provider and optionally wrap with MCP
+   * @param config Provider configuration
+   * @returns Provider instance (wrapped with MCP if enabled)
+   */
+  createWithMCP(config: ProviderConfig): BaseProvider {
+    // Create base provider
+    const provider = this.create(config);
+
+    // Wrap with MCP if enabled in config
+    if (config.config?.mcp?.enabled) {
+      return new MCPWrapper(config, provider, config.config.mcp);
     }
 
     return provider;
@@ -190,6 +208,26 @@ export function createProvider(config: ProviderConfig): BaseProvider {
  */
 export function createProviders(configs: ProviderConfig[]): BaseProvider[] {
   return registry.createMultiple(configs);
+}
+
+/**
+ * Create a provider and optionally wrap with MCP if enabled
+ * @param config Provider configuration
+ * @returns Provider instance (wrapped with MCP if enabled)
+ *
+ * @example
+ * const provider = createProviderWithMCP({
+ *   id: 'openai:gpt-4o-mini',
+ *   config: {
+ *     mcp: {
+ *       enabled: true,
+ *       servers: [...]
+ *     }
+ *   }
+ * });
+ */
+export function createProviderWithMCP(config: ProviderConfig): BaseProvider {
+  return registry.createWithMCP(config);
 }
 
 /**

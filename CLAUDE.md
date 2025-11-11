@@ -124,6 +124,84 @@ Analytics Update (dashboard/data/analytics.json)
 Dashboard Refresh (dashboard/index.html)
 ```
 
+## MCP (Model Context Protocol) Support
+
+**Status**: Core implementation complete ✅ (454 tests passing)
+
+LLM Daily includes full support for MCP (Model Context Protocol), Anthropic's protocol for connecting AI assistants to external tools and data sources.
+
+### MCP Architecture
+
+MCP is implemented as a **provider-independent wrapper** that works with ANY LLM provider:
+
+```
+TaskRunner
+  ↓ uses createProviderWithMCP()
+MCPWrapper (wraps any provider)
+  ↓
+BaseProvider (OpenAI/Anthropic/OpenRouter/custom)
+  ↓
+MCP Client → MCP Servers (filesystem, database, web, etc.)
+```
+
+**Key files**:
+- `src/core/mcp/wrapper.ts` - MCPWrapper class (wraps providers)
+- `src/core/mcp/client.ts` - MCP client for server connections
+- `src/core/mcp/strategies/` - Tool call format strategies
+- `src/core/task-runner.ts` - Uses createProviderWithMCP()
+
+### Configuration
+
+Enable MCP for any task by adding `options.mcp` to provider config:
+
+```yaml
+provider:
+  id: "openai:gpt-4o-mini"  # Standard provider ID (no mcp: prefix!)
+  options:
+    mcp:
+      enabled: true
+      servers:
+        - name: "filesystem"
+          transport: "stdio"
+          command: "npx"
+          args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
+      allowedTools: ["read_file", "list_directory"]
+      toolTimeout: 30000
+      maxToolCalls: 10
+```
+
+**Important**: MCP works with ANY provider - just add `options.mcp` to enable.
+
+### Core Features
+
+1. **Provider-Independent**: Wraps OpenAI, Anthropic, OpenRouter, or custom providers
+2. **Tool Calling**: Automatic tool discovery, execution, and result formatting
+3. **Strategy Pattern**: Auto-selects tool call format (OpenAI/Anthropic/XML)
+4. **Security**: Tool allowlist/blocklist filtering
+5. **Multi-turn**: Handles tool calls in conversation loops
+6. **Transport Support**: stdio (http/websocket planned)
+7. **Testing**: 20 MCP-specific tests (client + wrapper)
+
+### Example Task
+
+See `tasks/mcp-example/` for a complete filesystem analysis example.
+
+### Implementation Notes
+
+- MCP is a **wrapper**, not a provider type
+- No special provider IDs needed (no `mcp:` prefix)
+- Configuration under `options.mcp.enabled`
+- Task runner automatically wraps providers when MCP enabled
+- Tool call format auto-detected per provider
+
+### Future Enhancements
+
+- MCP resources and prompts (currently tools only)
+- HTTP/WebSocket transports
+- Memory integration for tool results
+- Analytics dashboard for tool usage
+- Streaming tool calls
+
 ## Key Implementation Patterns
 
 ### Provider Implementation

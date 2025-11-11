@@ -1,0 +1,63 @@
+# MCP Example Task Configuration
+# This task demonstrates MCP (Model Context Protocol) integration
+# with filesystem access tools
+
+provider:
+  # Normal provider ID - MCP is enabled via options below
+  id: "openai:gpt-4o-mini"
+
+  options:
+    temperature: 0.7
+    maxTokens: 2000
+
+    # MCP Configuration - enables MCP for this provider
+    mcp:
+      enabled: true
+
+      # MCP servers to connect to
+      servers:
+        # Filesystem server - provides file operations
+        - name: "filesystem"
+          transport: "stdio"
+          command: "npx"
+          args:
+            - "-y"
+            - "@modelcontextprotocol/server-filesystem"
+            - "."  # Workspace root
+          env:
+            WORKSPACE_ROOT: "."
+
+      # Whitelist of allowed tools (security)
+      allowedTools:
+        - "read_file"
+        - "list_directory"
+        - "search_files"
+
+      # Tool execution timeout (30 seconds)
+      toolTimeout: 30000
+
+      # Maximum tool calls per execution
+      maxToolCalls: 10
+
+      # Include tool results in memory
+      includeToolsInMemory: true
+
+# Memory configuration
+memory:
+  enabled: true
+  type: "file"
+  path: "./memory.md"
+
+# Output configuration
+output:
+  format: "markdown"
+  destination: "file"
+  path: "./output/analysis.md"
+  git:
+    autoCommit: false
+
+# Schedule (disabled for manual testing)
+schedule:
+  cron: "0 9 * * 1"  # Every Monday at 9 AM
+  timezone: "UTC"
+  enabled: false
