@@ -78,8 +78,11 @@ export async function shouldRunTask(options: DeduplicationOptions): Promise<Dedu
       case 'hybrid':
         return await hybridDeduplication(options);
 
-      default:
-        throw new DeduplicationError(`Unknown strategy: ${options.strategy}`);
+      default: {
+        // This case should never be reached due to TypeScript's type checking
+        const unknownStrategy: never = options.strategy;
+        throw new DeduplicationError(`Unknown strategy: ${String(unknownStrategy)}`);
+      }
     }
   } catch (error) {
     if (error instanceof DeduplicationError) {
@@ -251,25 +254,37 @@ function parseDeduplicationResponse(response: string): {
       jsonStr = jsonStr.replace(/```\n?/, '').replace(/\n?```$/, '');
     }
 
-    const parsed = JSON.parse(jsonStr);
+    const parsed: unknown = JSON.parse(jsonStr);
 
     // Validate structure
-    if (typeof parsed.shouldRun !== 'boolean') {
+    if (
+      typeof parsed !== 'object' ||
+      parsed === null ||
+      !('shouldRun' in parsed) ||
+      !('reason' in parsed) ||
+      !('confidence' in parsed)
+    ) {
+      throw new Error('Invalid response structure');
+    }
+
+    const record = parsed as Record<string, unknown>;
+
+    if (typeof record.shouldRun !== 'boolean') {
       throw new Error('Missing or invalid "shouldRun" field');
     }
-    if (typeof parsed.reason !== 'string') {
+    if (typeof record.reason !== 'string') {
       throw new Error('Missing or invalid "reason" field');
     }
-    if (typeof parsed.confidence !== 'number') {
+    if (typeof record.confidence !== 'number') {
       throw new Error('Missing or invalid "confidence" field');
     }
 
     // Clamp confidence to 0-1
-    const confidence = Math.max(0, Math.min(1, parsed.confidence));
+    const confidence = Math.max(0, Math.min(1, record.confidence));
 
     return {
-      shouldRun: parsed.shouldRun,
-      reason: parsed.reason,
+      shouldRun: record.shouldRun,
+      reason: record.reason,
       confidence,
     };
   } catch (error) {

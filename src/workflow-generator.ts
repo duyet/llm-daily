@@ -247,8 +247,8 @@ function isValidCron(cron: string): boolean {
     const part = parts[i];
 
     // Allow special characters: * , - /
-    if (part === '*') continue;
-    if (/^[0-9,\-/]+$/.test(part)) continue;
+    if (part === '*') {continue;}
+    if (/^[0-9,\-/]+$/.test(part)) {continue;}
 
     // Invalid character found
     return false;

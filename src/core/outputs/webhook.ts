@@ -2,6 +2,7 @@
  * Webhook output integration - sends results to HTTP endpoints
  */
 
+import { logger } from '../../utils/logger.js';
 import { TIMEOUTS, RETRY } from '../../constants.js';
 import type {
   OutputIntegration,
@@ -21,7 +22,7 @@ export class WebhookOutput implements OutputIntegration {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         await this.sendWebhook(result, timeout);
-        console.log(`✅ Sent webhook for ${result.taskName} to ${this.config.url}`);
+        logger.debug(`✅ Sent webhook for ${result.taskName} to ${this.config.url}`);
         return;
       } catch (error) {
         console.error(`❌ Webhook attempt ${attempt}/${maxRetries} failed:`, error);

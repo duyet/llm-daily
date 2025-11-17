@@ -71,24 +71,27 @@ function extractFrontmatter(content: string): [string | null, string] {
  */
 function parseFrontmatter(frontmatter: string): MemoryMetadata {
   try {
-    const parsed = yaml.parse(frontmatter);
+    const parsed: unknown = yaml.parse(frontmatter);
 
     // Validate required fields
     if (parsed === null || typeof parsed !== 'object') {
       return { ...DEFAULT_MEMORY_METADATA };
     }
 
+    // Type guard to check if parsed is a record
+    const record = parsed as Record<string, unknown>;
+
     // Extract and validate metadata fields
     const metadata: MemoryMetadata = {
-      lastRun: typeof parsed.lastRun === 'string' ? parsed.lastRun : undefined,
-      totalRuns: typeof parsed.totalRuns === 'number' ? parsed.totalRuns : 0,
-      totalTokens: typeof parsed.totalTokens === 'number' ? parsed.totalTokens : 0,
-      totalCost: typeof parsed.totalCost === 'number' ? parsed.totalCost : 0,
-      lastTopics: Array.isArray(parsed.lastTopics) ? parsed.lastTopics : [],
+      lastRun: typeof record.lastRun === 'string' ? record.lastRun : undefined,
+      totalRuns: typeof record.totalRuns === 'number' ? record.totalRuns : 0,
+      totalTokens: typeof record.totalTokens === 'number' ? record.totalTokens : 0,
+      totalCost: typeof record.totalCost === 'number' ? record.totalCost : 0,
+      lastTopics: Array.isArray(record.lastTopics) ? record.lastTopics : [],
     };
 
     // Include any custom fields
-    for (const [key, value] of Object.entries(parsed)) {
+    for (const [key, value] of Object.entries(record)) {
       if (!['lastRun', 'totalRuns', 'totalTokens', 'totalCost', 'lastTopics'].includes(key)) {
         metadata[key] = value;
       }
@@ -161,9 +164,9 @@ export function isValidMemoryContent(content: unknown): content is MemoryContent
   const meta = mem.metadata;
 
   // Check required metadata fields
-  if (typeof meta.totalRuns !== 'number') return false;
-  if (typeof meta.totalTokens !== 'number') return false;
-  if (typeof meta.totalCost !== 'number') return false;
+  if (typeof meta.totalRuns !== 'number') {return false;}
+  if (typeof meta.totalTokens !== 'number') {return false;}
+  if (typeof meta.totalCost !== 'number') {return false;}
 
   // Check optional metadata fields
   if (meta.lastRun !== undefined && typeof meta.lastRun !== 'string') {

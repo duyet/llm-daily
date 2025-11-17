@@ -41,9 +41,9 @@ export abstract class BaseProvider {
 
     // Validate provider configuration
     const configValidation = validateProviderConfig({
-      temperature: config.config?.temperature as number | undefined,
-      maxTokens: config.config?.max_tokens as number | undefined,
-      timeout: config.config?.timeout as number | undefined,
+      temperature: config.config?.temperature,
+      maxTokens: typeof config.config?.max_tokens === 'number' ? config.config.max_tokens : undefined,
+      timeout: typeof config.config?.timeout === 'number' ? config.config.timeout : undefined,
     });
     if (!configValidation.valid) {
       throw new ProviderError(
@@ -239,7 +239,7 @@ export abstract class BaseProvider {
       }
     }
 
-    throw lastError;
+    throw lastError ?? new Error('Retry failed with no error captured');
   }
 
   /**

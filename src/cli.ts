@@ -7,7 +7,7 @@
 import { program } from 'commander';
 import { configureLogger } from './utils/logger.js';
 import { generateCommand } from './commands/generate.js';
-import { newCommand } from './commands/new.js';
+import { newCommand, type TaskTemplate } from './commands/new.js';
 import { runCommand } from './commands/run.js';
 import { listCommand } from './commands/list.js';
 import { validateCommand } from './commands/validate.js';
@@ -24,7 +24,7 @@ program
   .hook('preAction', (thisCommand) => {
     // Configure logger based on global options
     const opts = thisCommand.opts();
-    configureLogger({ quiet: opts.quiet, verbose: opts.verbose });
+    configureLogger({ quiet: Boolean(opts.quiet), verbose: Boolean(opts.verbose) });
   });
 
 /**
@@ -35,7 +35,7 @@ program
   .description('Generate GitHub Actions workflows for all tasks')
   .option('--dry-run', 'Show what would be generated without creating files')
   .option('--force', 'Overwrite existing workflow files')
-  .action(async (options) => {
+  .action(async (options: { dryRun?: boolean; force?: boolean }) => {
     await generateCommand(options);
   });
 
@@ -49,9 +49,17 @@ program
   .option('-t, --template <type>', 'Template to use: daily-summary, monitoring, custom')
   .option('-p, --provider <id>', 'Provider ID (e.g., openai:gpt-4o-mini)')
   .option('-s, --schedule <cron>', 'Schedule as cron expression (e.g., "0 9 * * *")')
-  .action(async (name, options) => {
-    await newCommand(name, options);
-  });
+  .action(
+    async (
+      name: string | undefined,
+      options: { interactive?: boolean; template?: string; provider?: string; schedule?: string },
+    ) => {
+      await newCommand(name, {
+        ...options,
+        template: options.template as TaskTemplate | undefined,
+      });
+    },
+  );
 
 /**
  * Run command - Execute a task locally
@@ -62,10 +70,10 @@ program
   .option('--env-file <path>', 'Load environment from custom .env file')
   .option('--dry-run', 'Dry run - show what would be executed')
   .option('--force', 'Force run, skipping deduplication checks')
-  .action(async (name, options) => {
+  .action(async (name: string, options: { envFile?: string; dryRun?: boolean; force?: boolean }) => {
     // Pass global options to command
     const globalOpts = program.opts();
-    await runCommand(name, { ...options, ...globalOpts });
+    await runCommand(name, { ...options, quiet: Boolean(globalOpts.quiet), verbose: Boolean(globalOpts.verbose) });
   });
 
 /**
@@ -75,7 +83,7 @@ program
   .command('list')
   .description('List all tasks with their status')
   .option('-d, --detailed', 'Show detailed information including cost')
-  .action(async (options) => {
+  .action(async (options: { detailed?: boolean }) => {
     await listCommand(options);
   });
 
@@ -87,7 +95,7 @@ program
   .description('Validate task configuration (omit name to validate all)')
   .option('--check-providers', 'Test provider connectivity (not yet implemented)')
   .option('--fail-fast', 'Stop validation on first error')
-  .action(async (name, options) => {
+  .action(async (name: string | undefined, options: { checkProviders?: boolean; failFast?: boolean }) => {
     await validateCommand(name, options);
   });
 

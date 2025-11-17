@@ -5,6 +5,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { execSync } from 'child_process';
+import { logger } from '../../utils/logger.js';
 import type {
   OutputIntegration,
   TaskResult,
@@ -27,12 +28,12 @@ export class CommitOutput implements OutputIntegration {
       }
 
       // 3. Git add files
-      await this.gitAdd(result.taskName);
+      this.gitAdd(result.taskName);
 
       // 4. Git commit with custom or default message
-      await this.gitCommit(result);
+      this.gitCommit(result);
 
-      console.log(`✅ Committed results for ${result.taskName}`);
+      logger.info(`✅ Committed results for ${result.taskName}`);
     } catch (error) {
       console.error(`❌ Failed to commit results for ${result.taskName}:`, error);
       throw error;
@@ -51,7 +52,7 @@ export class CommitOutput implements OutputIntegration {
     // Write result
     await fs.writeFile(outputPath, JSON.stringify(result, null, 2), 'utf-8');
 
-    console.log(`📝 Wrote result to ${outputPath}`);
+    logger.debug(`📝 Wrote result to ${outputPath}`);
   }
 
   /**
@@ -84,7 +85,7 @@ export class CommitOutput implements OutputIntegration {
       // Write updated memory
       await fs.writeFile(memoryPath, memory, 'utf-8');
 
-      console.log(`📝 Updated memory: ${memoryPath}`);
+      logger.debug(`📝 Updated memory: ${memoryPath}`);
     } catch {
       // Memory file doesn't exist, skip update
     }
@@ -111,7 +112,7 @@ ${result.error ? `**Error**: ${result.error}` : ''}
   /**
    * Git add files
    */
-  private async gitAdd(taskName: string): Promise<void> {
+  private gitAdd(taskName: string): void {
     try {
       const files = [
         this.config.path.replace('{{taskName}}', taskName),
@@ -119,7 +120,7 @@ ${result.error ? `**Error**: ${result.error}` : ''}
       ];
 
       execSync(`git add ${files.join(' ')}`, { stdio: 'ignore' });
-    } catch (error) {
+    } catch {
       // Ignore git errors (might not be a git repo or files don't exist)
     }
   }
@@ -127,11 +128,11 @@ ${result.error ? `**Error**: ${result.error}` : ''}
   /**
    * Git commit with message
    */
-  private async gitCommit(result: TaskResult): Promise<void> {
+  private gitCommit(result: TaskResult): void {
     try {
       const message = this.formatCommitMessage(result);
       execSync(`git commit -m "${message}" --no-verify`, { stdio: 'ignore' });
-    } catch (error) {
+    } catch {
       // Ignore commit errors (might be nothing to commit)
     }
   }

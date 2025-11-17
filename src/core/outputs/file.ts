@@ -4,6 +4,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
+import { logger } from '../../utils/logger.js';
 import type { OutputIntegration, TaskResult, FileOutputConfig } from '../../types/output.types.js';
 import { replaceTemplateVariables } from '../../utils/template.js';
 
@@ -30,7 +31,7 @@ export class FileOutput implements OutputIntegration {
         await fs.writeFile(outputPath, content, 'utf-8');
       }
 
-      console.log(`✅ Wrote result to ${outputPath}`);
+      logger.debug(`✅ Wrote result to ${outputPath}`);
     } catch (error) {
       console.error(`❌ Failed to write file output for ${result.taskName}:`, error);
       throw error;

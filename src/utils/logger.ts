@@ -145,11 +145,11 @@ export class Logger {
     // Use appropriate console method
     switch (level) {
       case 'error':
-        // eslint-disable-next-line no-console
+         
         console.error(formatted, ...sanitizedArgs);
         break;
       case 'warn':
-        // eslint-disable-next-line no-console
+         
         console.warn(formatted, ...sanitizedArgs);
         break;
       default:
