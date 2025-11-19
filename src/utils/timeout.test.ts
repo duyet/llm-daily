@@ -7,6 +7,16 @@ import {
   TimeoutError,
 } from './timeout.js';
 
+// Mock logger
+vi.mock('./logger.js', () => ({
+  logger: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
 describe('Timeout Utilities', () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -107,7 +117,7 @@ describe('Timeout Utilities', () => {
     });
 
     it('should handle cleanup function errors gracefully', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { logger } = await import('./logger.js');
       const cleanupFn = vi.fn(async () => {
         throw new Error('Cleanup failed');
       });
@@ -129,12 +139,10 @@ describe('Timeout Utilities', () => {
 
       await expect(promise).rejects.toThrow(TimeoutError);
       expect(cleanupFn).toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(logger.debug).toHaveBeenCalledWith(
         expect.stringContaining('Cleanup failed'),
         expect.any(Error)
       );
-
-      consoleSpy.mockRestore();
     });
 
     it('should pass AbortSignal to operation function', async () => {

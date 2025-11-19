@@ -2,6 +2,7 @@
  * Timeout utility for wrapping async operations with configurable timeouts and cleanup
  */
 
+import { logger } from './logger.js';
 import { TIMEOUTS } from '../constants.js';
 
 export interface TimeoutOptions {
@@ -64,7 +65,7 @@ export async function withTimeout<T>(
       try {
         await cleanupFn();
       } catch (cleanupError) {
-        console.error(`Cleanup failed for ${operation}:`, cleanupError);
+        logger.debug(`Cleanup failed for ${operation}:`, cleanupError);
       }
     }
 

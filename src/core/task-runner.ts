@@ -6,6 +6,7 @@
 import { promises as fs } from 'fs';
 import { join, dirname } from 'path';
 import * as YAML from 'yaml';
+import { logger } from '../utils/logger.js';
 import { createProvider } from './providers/registry.js';
 import { createMemoryManager } from './memory.js';
 import { replaceTemplateVariables } from '../utils/template.js';
@@ -394,7 +395,7 @@ export class TaskRunner {
       await fs.writeFile(analyticsPath, JSON.stringify(analytics, null, 2), 'utf-8');
     } catch (error) {
       // Don't fail the whole task if analytics fails
-      console.error('Failed to save analytics:', error);
+      logger.debug('Failed to save analytics:', error);
     }
   }
 
