@@ -6,7 +6,7 @@
 import { promises as fs } from 'fs';
 import { join, dirname } from 'path';
 import * as YAML from 'yaml';
-import { createProvider } from './providers/registry.js';
+import { createProviderWithMCP } from './providers/registry.js';
 import { createMemoryManager } from './memory.js';
 import { replaceTemplateVariables } from '../utils/template.js';
 import { shouldRunTask } from './memory/deduplication.js';
@@ -174,8 +174,8 @@ export class TaskRunner {
         };
       }
 
-      // 5. Call provider with timeout
-      const provider = createProvider({
+      // 5. Call provider with timeout (wrap with MCP if enabled in config)
+      const provider = createProviderWithMCP({
         id: config.provider.id,
         config: config.provider.options,
       });

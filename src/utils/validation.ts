@@ -10,6 +10,7 @@ import {
   TIMEOUTS,
   TOKEN_ESTIMATION,
 } from '../constants.js';
+import type { MCPServerConfig } from '../types/provider.types.js';
 
 /**
  * Validation result
@@ -249,6 +250,110 @@ export function validateContextWindow(
     warnings.push(
       `Token usage approaching context window limit (${Math.round((totalEstimatedTokens / maxContextTokens) * 100)}% of ${maxContextTokens})`
     );
+  }
+
+  return {
+    valid: true,
+    warnings: warnings.length > 0 ? warnings : undefined,
+  };
+}
+
+/**
+ * Validate MCP server configuration
+ */
+export function validateMCPServerConfig(serverConfig: {
+  name: string;
+  transport?: string;
+  command?: string;
+  url?: string;
+}): ValidationResult {
+  const errors: string[] = [];
+
+  if (!serverConfig.name || serverConfig.name.trim() === '') {
+    errors.push('MCP server name is required');
+  }
+
+  const transport = serverConfig.transport || 'stdio';
+
+  if (transport === 'stdio') {
+    if (!serverConfig.command) {
+      errors.push(`MCP server "${serverConfig.name}": command is required for stdio transport`);
+    }
+  } else if (transport === 'http' || transport === 'websocket') {
+    if (!serverConfig.url) {
+      errors.push(`MCP server "${serverConfig.name}": url is required for ${transport} transport`);
+    }
+  } else {
+    errors.push(`MCP server "${serverConfig.name}": unsupported transport type "${transport}"`);
+  }
+
+  if (errors.length > 0) {
+    return {
+      valid: false,
+      error: errors.join('; '),
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validate MCP configuration
+ */
+export function validateMCPConfig(config: {
+  enabled: boolean;
+  servers: unknown[];
+  toolTimeout?: number;
+  maxToolCalls?: number;
+}): ValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  if (!config.enabled) {
+    return { valid: true };
+  }
+
+  if (!config.servers || config.servers.length === 0) {
+    errors.push('At least one MCP server is required when MCP is enabled');
+  }
+
+  // Validate each server configuration
+  if (config.servers) {
+    for (const server of config.servers) {
+      const serverValidation = validateMCPServerConfig(server as MCPServerConfig);
+      if (!serverValidation.valid) {
+        errors.push(serverValidation.error!);
+      }
+    }
+  }
+
+  // Validate tool timeout
+  if (config.toolTimeout !== undefined) {
+    if (config.toolTimeout < 1000) {
+      warnings.push('MCP tool timeout is less than 1 second, which may be too short');
+    }
+    if (config.toolTimeout > 300000) {
+      warnings.push('MCP tool timeout is greater than 5 minutes, which may cause long waits');
+    }
+  }
+
+  // Validate max tool calls
+  if (config.maxToolCalls !== undefined) {
+    if (config.maxToolCalls < 1) {
+      errors.push('MCP maxToolCalls must be at least 1');
+    }
+    if (config.maxToolCalls > 100) {
+      warnings.push(
+        'MCP maxToolCalls is very high (>100), which may result in long execution times'
+      );
+    }
+  }
+
+  if (errors.length > 0) {
+    return {
+      valid: false,
+      error: errors.join('; '),
+    };
   }
 
   return {

@@ -51,6 +51,7 @@
     "dashboard:prerender": "cd dashboard && npm run build"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.21.1",
     "commander": "^14.0.0",
     "cron-parser": "^4.9.0",
     "dotenv": "^17.2.3",
